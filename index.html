@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>STRIP//ZIP — Technical Multi-Archive Image Strip Reader</title>
+  <meta name="description" content="Technical web application that unpacks ZIP/RAR image archives on server disk into continuous long vertical strips. Multi-read management, live page reordering on disk, and synchronized reading.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-carbon text-primary antialiased">
+
+  <!-- TOP TECHNICAL HUD BAR -->
+  <header id="top-hud" class="hud-header">
+    <div class="hud-left">
+      <div class="brand">
+        <span class="status-pulse"></span>
+        <span class="brand-title">STRIP<span class="text-accent">//</span>ZIP</span>
+        <span class="badge-tech">SERVER DISK ENGINE</span>
+        <span id="server-sync-status" class="sync-badge">● SYNCED</span>
+      </div>
+
+      <!-- READ SWITCHER COMPONENT -->
+      <div id="read-switcher" class="read-switcher hidden">
+        <button id="btn-prev-read" class="hud-btn hud-btn-icon" title="Previous Read (Key: [)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+
+        <div class="read-selector-wrapper">
+          <button id="btn-read-selector" class="read-selector-btn">
+            <span class="read-badge-num" id="current-read-badge">READ 1/1</span>
+            <span class="read-name-text" id="current-read-title">Archive.zip</span>
+            <span class="read-count-pill" id="current-read-pages">0 P</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </button>
+        </div>
+
+        <button id="btn-next-read" class="hud-btn hud-btn-icon" title="Next Read (Key: ])">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+
+        <button id="btn-library-toggle" class="hud-btn hud-btn-accent" title="Open Library Drawer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+          <span>SERVER SHELF (<span id="reads-count">0</span>)</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- HUD TELEMETRY & VIEW CONTROLS -->
+    <div class="hud-right">
+      <!-- Live scroll / page telemetry -->
+      <div id="hud-telemetry" class="hud-telemetry hidden">
+        <span class="telemetry-item">PAGE <strong id="telem-page">01</strong>/<span id="telem-total">00</span></span>
+        <span class="telemetry-separator">/</span>
+        <span class="telemetry-item"><strong id="telem-percent">0%</strong> SCROLLED</span>
+      </div>
+
+      <!-- Long strip width constraint -->
+      <div class="hud-control-group">
+        <label for="select-strip-width" class="hud-label">STRIP WIDTH</label>
+        <select id="select-strip-width" class="hud-select">
+          <option value="fit-760">760px (Webtoon)</option>
+          <option value="fit-960">960px (Standard)</option>
+          <option value="fit-1200" selected>1200px (Wide HD)</option>
+          <option value="fit-1400">1400px (Cinema)</option>
+          <option value="fit-full">100% (Full Bleed)</option>
+        </select>
+      </div>
+
+      <!-- Mode selector -->
+      <div class="hud-control-group">
+        <label for="select-read-mode" class="hud-label">MODE</label>
+        <select id="select-read-mode" class="hud-select">
+          <option value="long-strip" selected>Long Strip (Vertical)</option>
+          <option value="single-page">Single Page</option>
+          <option value="double-spread">Double Spread</option>
+        </select>
+      </div>
+
+      <!-- Controls: Edit Order, Filters, Specs, Add More, Fullscreen -->
+      <div class="hud-btn-row">
+        <!-- EDIT ORDER BUTTON -->
+        <button id="btn-enter-edit" class="hud-btn hud-btn-edit hidden" title="Reorder pages physically on server disk">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+          <span>EDIT ORDER</span>
+        </button>
+
+        <button id="btn-toggle-filters" class="hud-btn" title="Image Filters & Gaps">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          <span>VIEW</span>
+        </button>
+
+        <button id="btn-open-specs" class="hud-btn" title="Archive Technical Telemetry & Manifest">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+          <span>SPECS</span>
+        </button>
+
+        <button id="btn-add-files-hud" class="hud-btn hud-btn-outline" title="Upload More ZIP/RAR Files to Server">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          <span>+ UPLOAD</span>
+        </button>
+
+        <button id="btn-fullscreen" class="hud-btn hud-btn-icon" title="Toggle Fullscreen (F)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN VIEWPORT CONTAINER -->
+  <main id="app-viewport" class="app-viewport">
+
+    <!-- EMPTY STATE & DRAG/DROP ZONE -->
+    <section id="drop-zone" class="drop-zone-container">
+      <div class="drop-box">
+        <div class="radar-scan-line"></div>
+        <div class="drop-icon-wrapper">
+          <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+          </svg>
+        </div>
+
+        <h1 class="drop-title">UPLOAD ZIP, RAR, CBZ OR IMAGES TO SERVER</h1>
+        <p class="drop-subtitle">
+          Files upload directly to the server. For each archive or image batch, the server creates a dedicated folder and sequences the images into a seamless vertical strip.
+          <br>
+          <strong class="text-accent">Live Disk Reordering:</strong> Enter Edit Mode anytime to move images around. Files are physically renamed inside the server folder, instantly updating across all users.
+        </p>
+
+        <!-- FORMATS SUPPORTED BADGE ROW -->
+        <div class="format-badges">
+          <span class="chip-format">.ZIP</span>
+          <span class="chip-format">.RAR</span>
+          <span class="chip-format">.CBZ</span>
+          <span class="chip-format">.7Z</span>
+          <span class="chip-format">JPG / JPEG</span>
+          <span class="chip-format">PNG</span>
+          <span class="chip-format">WEBP</span>
+          <span class="chip-format">AVIF</span>
+          <span class="chip-format">GIF</span>
+        </div>
+
+        <!-- ACTION BUTTONS -->
+        <div class="drop-actions">
+          <label class="btn-primary-action">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            <span>UPLOAD FILES TO SERVER (ZIP / RAR / IMAGES)</span>
+            <input type="file" id="file-input" multiple accept=".zip,.rar,.cbz,.cbr,.7z,image/*" class="hidden-input">
+          </label>
+
+          <button id="btn-load-demo" class="btn-demo-action">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            <span>⚡ CREATE SAMPLE READS ON SERVER</span>
+          </button>
+        </div>
+
+        <!-- TECHNICAL GUARANTEES -->
+        <div class="tech-specs-grid">
+          <div class="tech-spec-item">
+            <span class="spec-label">STORAGE ARCHITECTURE</span>
+            <span class="spec-value">Direct Server Disk Folders (<code>/data/reads/</code>)</span>
+          </div>
+          <div class="tech-spec-item">
+            <span class="spec-label">DECOMPRESSION ENGINE</span>
+            <span class="spec-value">Server 7-Zip (ZIP, RAR, CBZ, 7Z, CBR)</span>
+          </div>
+          <div class="tech-spec-item">
+            <span class="spec-label">CUSTOM ORDER PERSISTENCE</span>
+            <span class="spec-value">Physical File Renaming on Disk (<code>0001_...</code>)</span>
+          </div>
+          <div class="tech-spec-item">
+            <span class="spec-label">MULTI-USER SYNC</span>
+            <span class="spec-value">Filesystem Single Source of Truth</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LOADING / UPLOADING PROGRESS OVERLAY -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+      <div class="loading-card">
+        <div class="loading-spinner"></div>
+        <div class="loading-text-group">
+          <div class="loading-title" id="loading-title">UPLOADING & DECOMPRESSING...</div>
+          <div class="loading-progress-bar">
+            <div id="loading-progress-fill" class="progress-fill" style="width: 0%"></div>
+          </div>
+          <div class="loading-meta" id="loading-meta">Sending files to server disk...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- READER VIEWPORT (LONG STRIP & EDIT MODE) -->
+    <div id="reader-view" class="reader-view hidden">
+
+      <!-- STICKY EDIT MODE ACTION BAR -->
+      <div id="edit-mode-bar" class="edit-mode-bar hidden">
+        <div class="edit-bar-left">
+          <span class="edit-badge">✏️ EDIT ORDER MODE</span>
+          <span class="edit-hint">Drag pages or use arrows to rearrange. Saving will physically re-sequence the files inside the server folder.</span>
+        </div>
+        <div class="edit-bar-right">
+          <span id="edit-changes-count" class="edit-counter">No changes</span>
+          <button id="btn-save-order" class="btn-save-edit" disabled>💾 SAVE TO SERVER DISK</button>
+          <button id="btn-reset-order" class="btn-secondary-edit">↺ RESET</button>
+          <button id="btn-exit-edit" class="btn-cancel-edit">✕ EXIT EDIT MODE</button>
+        </div>
+      </div>
+
+      <!-- TOP ARCHIVE BANNER -->
+      <div class="archive-header-banner">
+        <div class="banner-inner">
+          <div class="banner-left">
+            <span class="banner-badge">SERVER READ</span>
+            <h2 class="banner-title" id="reader-archive-name">archive.zip</h2>
+            <div class="banner-sub" id="reader-archive-sub">Folder: /data/reads/archive • 18 Pages</div>
+          </div>
+          <div class="banner-right">
+            <button id="btn-banner-edit" class="banner-btn banner-btn-accent">✏️ EDIT PAGE ORDER</button>
+            <button id="btn-banner-specs" class="banner-btn">SERVER SPECS</button>
+            <button id="btn-banner-delete-read" class="banner-btn banner-btn-danger">DELETE READ</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- EDIT MODE CARDS GRID (Displayed only when in edit mode) -->
+      <div id="edit-grid-container" class="edit-grid-container hidden">
+        <div class="edit-grid-header">
+          <h3>PAGE SEQUENCE ON SERVER DISK</h3>
+          <p>Drag any card to change position, or click the arrows. When satisfied, click <strong>"SAVE TO SERVER DISK"</strong> above.</p>
+        </div>
+        <div id="edit-cards-list" class="edit-cards-list">
+          <!-- Dynamically populated page cards -->
+        </div>
+      </div>
+
+      <!-- THE CONTINUOUS VERTICAL STRIP CONTAINER (Reading mode) -->
+      <div id="strip-outer" class="strip-outer width-fit-1200">
+        <div id="strip-container" class="strip-container gap-0">
+          <!-- Dynamic continuous images will be injected here -->
+        </div>
+
+        <!-- PUSH NAVIGATION CONTROLS FOR SINGLE / DOUBLE MODE -->
+        <div id="paged-controls" class="paged-controls hidden">
+          <button id="btn-paged-prev" class="paged-nav-btn">◀ PREVIOUS PAGE</button>
+          <span id="paged-indicator" class="paged-nav-indicator">PAGE 1 / 18</span>
+          <button id="btn-paged-next" class="paged-nav-btn">NEXT PAGE ▶</button>
+        </div>
+
+        <!-- BOTTOM END-OF-READ STRIP TRANSITION -->
+        <div class="archive-footer-banner">
+          <div class="footer-strip-line"></div>
+          <div class="footer-inner">
+            <div class="footer-title">END OF THIS READ</div>
+            <p class="footer-sub" id="footer-next-text">Proceed to next archive or select from shelf.</p>
+            <div class="footer-btn-row">
+              <button id="btn-footer-prev-read" class="btn-footer-nav">◀ PREVIOUS READ</button>
+              <button id="btn-footer-top" class="btn-footer-action">↑ BACK TO TOP</button>
+              <button id="btn-footer-next-read" class="btn-footer-nav btn-footer-highlight">NEXT READ ▶</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- FLOATING QUICK NAVIGATION RADAR (SCRUBBER & HUD JUMPER) -->
+  <aside id="quick-radar" class="quick-radar hidden">
+    <div class="radar-card">
+      <button id="btn-radar-top" class="radar-icon-btn" title="Jump to Top">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>
+      </button>
+
+      <div class="radar-page-display">
+        <span class="radar-num" id="radar-current-page">1</span>
+        <span class="radar-slash">/</span>
+        <span class="radar-total" id="radar-total-pages">18</span>
+      </div>
+
+      <!-- Mini scrub progress track -->
+      <div class="radar-scrub-track" id="radar-scrub-track" title="Click or drag to scrub pages">
+        <div class="radar-scrub-thumb" id="radar-scrub-thumb"></div>
+      </div>
+
+      <button id="btn-radar-bottom" class="radar-icon-btn" title="Jump to Bottom">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </button>
+    </div>
+  </aside>
+
+  <!-- READS SHELF / ARCHIVES LIBRARY DRAWER -->
+  <div id="reads-drawer" class="reads-drawer hidden">
+    <div class="drawer-backdrop" id="drawer-backdrop"></div>
+    <div class="drawer-panel">
+      <div class="drawer-header">
+        <div class="drawer-title-group">
+          <h2 class="drawer-title">SERVER READS SHELF (<span id="shelf-count">0</span> READS)</h2>
+          <p class="drawer-sub">Each folder on the server is an independent read. All users see the same live library.</p>
+        </div>
+        <div class="drawer-header-actions">
+          <label class="drawer-btn-upload">
+            + UPLOAD TO SERVER
+            <input type="file" id="drawer-file-input" multiple accept=".zip,.rar,.cbz,.cbr,.7z,image/*" class="hidden-input">
+          </label>
+          <button id="btn-close-drawer" class="drawer-close-btn" title="Close Drawer">✕</button>
+        </div>
+      </div>
+
+      <div class="drawer-body">
+        <div id="shelf-grid" class="shelf-grid">
+          <!-- Archive cards generated dynamically -->
+        </div>
+      </div>
+
+      <div class="drawer-footer">
+        <span class="drawer-footer-info" id="shelf-summary">0 server reads</span>
+        <button id="btn-refresh-server" class="btn-secondary" style="font-size: 0.72rem;">🔄 REFRESH FROM DISK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW & IMAGE ADJUSTMENTS MODAL -->
+  <div id="modal-filters" class="modal-backdrop hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title">VIEW & IMAGE FILTER SETTINGS</h3>
+        <button class="modal-close-btn" data-close="modal-filters">✕</button>
+      </div>
+      <div class="modal-body space-y-4">
+        <!-- Gap slider -->
+        <div class="filter-row">
+          <div class="filter-label-group">
+            <label for="range-gap" class="filter-label">Image Gap (Joint Spacing)</label>
+            <span class="filter-val" id="val-gap">0px (Seamless Strip)</span>
+          </div>
+          <input type="range" id="range-gap" min="0" max="32" step="2" value="0" class="slider-input">
+        </div>
+
+        <!-- Brightness -->
+        <div class="filter-row">
+          <div class="filter-label-group">
+            <label for="range-brightness" class="filter-label">Brightness</label>
+            <span class="filter-val" id="val-brightness">100%</span>
+          </div>
+          <input type="range" id="range-brightness" min="50" max="150" step="5" value="100" class="slider-input">
+        </div>
+
+        <!-- Contrast -->
+        <div class="filter-row">
+          <div class="filter-label-group">
+            <label for="range-contrast" class="filter-label">Contrast</label>
+            <span class="filter-val" id="val-contrast">100%</span>
+          </div>
+          <input type="range" id="range-contrast" min="50" max="150" step="5" value="100" class="slider-input">
+        </div>
+
+        <!-- Quick Toggles -->
+        <div class="toggles-grid">
+          <label class="toggle-card">
+            <input type="checkbox" id="check-invert">
+            <span class="toggle-text">Invert Colors (Dark Technical Mode)</span>
+          </label>
+          <label class="toggle-card">
+            <input type="checkbox" id="check-grayscale">
+            <span class="toggle-text">Grayscale / Black & White</span>
+          </label>
+          <label class="toggle-card">
+            <input type="checkbox" id="check-page-badges" checked>
+            <span class="toggle-text">Show Page # Badges</span>
+          </label>
+          <label class="toggle-card">
+            <input type="checkbox" id="check-smooth-scroll" checked>
+            <span class="toggle-text">Hardware Smooth Scroll</span>
+          </label>
+        </div>
+
+        <!-- Canvas Background -->
+        <div class="filter-row">
+          <label class="filter-label">Viewer Background</label>
+          <div class="bg-picker-row">
+            <button class="bg-swatch active" data-bg="#090d16" style="background: #090d16;" title="Deep Slate"></button>
+            <button class="bg-swatch" data-bg="#000000" style="background: #000000;" title="OLED Pitch Black"></button>
+            <button class="bg-swatch" data-bg="#18181b" style="background: #18181b;" title="Zinc Neutral"></button>
+            <button class="bg-swatch" data-bg="#262626" style="background: #262626;" title="Graphite Studio"></button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-reset-filters" class="btn-secondary">RESET DEFAULTS</button>
+        <button class="btn-primary" data-close="modal-filters">APPLY & CLOSE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TECHNICAL SPECS & ARCHIVE MANIFEST MODAL -->
+  <div id="modal-specs" class="modal-backdrop hidden">
+    <div class="modal-box modal-box-large">
+      <div class="modal-header">
+        <div class="specs-title-row">
+          <span class="badge-accent">SERVER DISK</span>
+          <h3 class="modal-title" id="specs-modal-title">SERVER READ SPECIFICATIONS</h3>
+        </div>
+        <button class="modal-close-btn" data-close="modal-specs">✕</button>
+      </div>
+
+      <div class="modal-body space-y-4">
+        <!-- High level metrics cards -->
+        <div class="specs-metrics-grid">
+          <div class="metric-card">
+            <span class="metric-label">SERVER FOLDER</span>
+            <span class="metric-value" id="spec-folder-name" style="font-size: 0.85rem; word-break: break-all;">--</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">TOTAL DISK PAYLOAD</span>
+            <span class="metric-value" id="spec-payload-size">--</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">PAGE COUNT</span>
+            <span class="metric-value text-accent" id="spec-image-count">--</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">LAST DISK UPDATE</span>
+            <span class="metric-value" id="spec-last-update">--</span>
+          </div>
+        </div>
+
+        <!-- File Manifest Table -->
+        <div class="specs-section">
+          <h4 class="specs-heading">PHYSICAL FILES IN SERVER FOLDER (CURRENT DISK SEQUENCE)</h4>
+          <div class="table-scroller">
+            <table class="specs-table">
+              <thead>
+                <tr>
+                  <th>ORDER</th>
+                  <th>PHYSICAL FILENAME</th>
+                  <th>FORMAT</th>
+                  <th>FILE SIZE</th>
+                  <th>ACTION</th>
+                </tr>
+              </thead>
+              <tbody id="specs-manifest-tbody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-primary" data-close="modal-specs">CLOSE INSPECTOR</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPT DEPENDENCIES -->
+  <script src="js/jszip.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
