@@ -1,173 +1,101 @@
 /**
- * STRIP//ZIP — Technical Multi-Archive Image Strip Reader Engine
- * Robust Dual-Mode Architecture:
- * 1. Server Disk Mode (when node server.js is running on localhost:3000)
- *    - Direct upload of ZIP, RAR, CBZ, and loose images to server disk
- *    - Native 7-Zip extraction into dedicated folders in /data/reads/
- *    - Physical disk file reordering when rearranged in Edit Mode
- * 2. In-Browser Mode Fallback (when opened via static server or double-clicked)
- *    - Safe JSON detection (prevents "Unexpected token < <!doctype" errors)
- *    - Instant client-side JSZip decompressor and memory reordering
+ * Strip Reader — Minimalist Long Strip Viewer with GitHub Repository Cloud Storage
+ * - Works 100% on GitHub Pages (static, zero-server)
+ * - Saves reads directly to your GitHub repository via GitHub REST API
+ * - Persistent forever across all devices (phone, laptop, tablet)
+ * - Unpacks ZIP, CBZ, and batches of images with natural alphanumeric ordering
+ * - Live Edit Order mode
  */
 
 (() => {
   'use strict';
 
-  // --- APPLICATION STATE ---
+  // --- STATE ---
   const state = {
-    serverMode: false, // True if server backend /api/reads is accessible
+    ghConfig: {
+      repo: localStorage.getItem('sr_gh_repo') || '',
+      token: localStorage.getItem('sr_gh_token') || '',
+      branch: localStorage.getItem('sr_gh_branch') || 'main',
+      path: localStorage.getItem('sr_gh_path') || 'reads'
+    },
+    ghConnected: false,
     reads: [], // List of loaded reads
     activeReadIndex: -1,
-    currentRead: null, // Full data for currently displayed read
-    readingMode: 'long-strip', // 'long-strip' | 'single-page' | 'double-spread'
-    pagedIndex: 0,
-    stripWidth: 'fit-1200',
-    gap: 0,
-    brightness: 100,
-    contrast: 100,
-    invert: false,
-    grayscale: false,
-    showBadges: true,
-    smoothScroll: true,
-    hudVisible: true,
-    pageObserver: null,
+    currentRead: null,
+    stripWidth: '1200',
 
-    // Edit Mode State
+    // Edit Mode
     isEditing: false,
-    stagedPages: [], // Working copy for drag-and-drop reordering
+    stagedPages: [],
     hasUnsavedChanges: false,
     dragSrcIndex: null,
 
-    // Background sync
-    syncTimer: null,
-    lastKnownUpdate: 0,
+    pageObserver: null
   };
 
-  const IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif', 'bmp', 'svg']);
+  const IMAGE_EXTS = new Set(['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif', 'bmp', 'svg']);
   const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
 
   // DOM Elements
   const el = {
-    topHud: document.getElementById('top-hud'),
-    readSwitcher: document.getElementById('read-switcher'),
+    btnGithubStatus: document.getElementById('btn-github-status'),
+    githubDot: document.getElementById('github-dot'),
+    githubStatusText: document.getElementById('github-status-text'),
+
+    readNav: document.getElementById('read-nav'),
     btnPrevRead: document.getElementById('btn-prev-read'),
     btnNextRead: document.getElementById('btn-next-read'),
-    btnReadSelector: document.getElementById('btn-read-selector'),
-    currentReadBadge: document.getElementById('current-read-badge'),
-    currentReadTitle: document.getElementById('current-read-title'),
-    currentReadPages: document.getElementById('current-read-pages'),
-    readsCount: document.getElementById('reads-count'),
-    btnLibraryToggle: document.getElementById('btn-library-toggle'),
-    serverSyncStatus: document.getElementById('server-sync-status'),
+    btnOpenShelf: document.getElementById('btn-open-shelf'),
+    activeReadTitle: document.getElementById('active-read-title'),
+    activeReadCount: document.getElementById('active-read-count'),
 
-    hudTelemetry: document.getElementById('hud-telemetry'),
+    telemetryBox: document.getElementById('telemetry-box'),
     telemPage: document.getElementById('telem-page'),
     telemTotal: document.getElementById('telem-total'),
-    telemPercent: document.getElementById('telem-percent'),
 
-    selectStripWidth: document.getElementById('select-strip-width'),
-    selectReadMode: document.getElementById('select-read-mode'),
-    btnEnterEdit: document.getElementById('btn-enter-edit'),
-    btnToggleFilters: document.getElementById('btn-toggle-filters'),
-    btnOpenSpecs: document.getElementById('btn-open-specs'),
-    btnAddFilesHud: document.getElementById('btn-add-files-hud'),
-    btnFullscreen: document.getElementById('btn-fullscreen'),
+    btnEditOrder: document.getElementById('btn-edit-order'),
+    selectWidth: document.getElementById('select-width'),
+    btnOpenSettings: document.getElementById('btn-open-settings'),
+    btnUploadMore: document.getElementById('btn-upload-more'),
+    masterFileInput: document.getElementById('master-file-input'),
 
     dropZone: document.getElementById('drop-zone'),
-    fileInput: document.getElementById('file-input'),
-    btnLoadDemo: document.getElementById('btn-load-demo'),
+    btnPickFiles: document.getElementById('btn-pick-files'),
+    btnSampleRead: document.getElementById('btn-sample-read'),
+    btnSetupGithubQuick: document.getElementById('btn-setup-github-quick'),
 
     loadingOverlay: document.getElementById('loading-overlay'),
-    loadingTitle: document.getElementById('loading-title'),
-    loadingProgressFill: document.getElementById('loading-progress-fill'),
-    loadingMeta: document.getElementById('loading-meta'),
+    loadingText: document.getElementById('loading-text'),
+    progressBar: document.getElementById('progress-bar'),
+    loadingSub: document.getElementById('loading-sub'),
 
     readerView: document.getElementById('reader-view'),
-    readerArchiveName: document.getElementById('reader-archive-name'),
-    readerArchiveSub: document.getElementById('reader-archive-sub'),
-    btnBannerEdit: document.getElementById('btn-banner-edit'),
-    btnBannerSpecs: document.getElementById('btn-banner-specs'),
-    btnBannerDeleteRead: document.getElementById('btn-banner-delete-read'),
-
-    // Edit Mode Bar & Grid
-    editModeBar: document.getElementById('edit-mode-bar'),
-    editChangesCount: document.getElementById('edit-changes-count'),
+    editBar: document.getElementById('edit-bar'),
     btnSaveOrder: document.getElementById('btn-save-order'),
     btnResetOrder: document.getElementById('btn-reset-order'),
     btnExitEdit: document.getElementById('btn-exit-edit'),
-    editGridContainer: document.getElementById('edit-grid-container'),
+    editCardsContainer: document.getElementById('edit-cards-container'),
     editCardsList: document.getElementById('edit-cards-list'),
 
     stripOuter: document.getElementById('strip-outer'),
     stripContainer: document.getElementById('strip-container'),
-
-    pagedControls: document.getElementById('paged-controls'),
-    btnPagedPrev: document.getElementById('btn-paged-prev'),
-    btnPagedNext: document.getElementById('btn-paged-next'),
-    pagedIndicator: document.getElementById('paged-indicator'),
-
-    btnFooterPrevRead: document.getElementById('btn-footer-prev-read'),
-    btnFooterNextRead: document.getElementById('btn-footer-next-read'),
+    btnFooterPrev: document.getElementById('btn-footer-prev'),
     btnFooterTop: document.getElementById('btn-footer-top'),
-    footerNextText: document.getElementById('footer-next-text'),
+    btnFooterNext: document.getElementById('btn-footer-next'),
 
-    quickRadar: document.getElementById('quick-radar'),
-    btnRadarTop: document.getElementById('btn-radar-top'),
-    btnRadarBottom: document.getElementById('btn-radar-bottom'),
-    radarCurrentPage: document.getElementById('radar-current-page'),
-    radarTotalPages: document.getElementById('radar-total-pages'),
-    radarScrubTrack: document.getElementById('radar-scrub-track'),
-    radarScrubThumb: document.getElementById('radar-scrub-thumb'),
+    modalSettings: document.getElementById('modal-settings'),
+    inputGhRepo: document.getElementById('input-gh-repo'),
+    inputGhToken: document.getElementById('input-gh-token'),
+    inputGhBranch: document.getElementById('input-gh-branch'),
+    inputGhPath: document.getElementById('input-gh-path'),
+    btnSaveGithub: document.getElementById('btn-save-github'),
+    btnDisconnectGithub: document.getElementById('btn-disconnect-github'),
 
-    readsDrawer: document.getElementById('reads-drawer'),
-    drawerBackdrop: document.getElementById('drawer-backdrop'),
-    btnCloseDrawer: document.getElementById('btn-close-drawer'),
-    drawerFileInput: document.getElementById('drawer-file-input'),
-    shelfGrid: document.getElementById('shelf-grid'),
-    shelfCount: document.getElementById('shelf-count'),
-    shelfSummary: document.getElementById('shelf-summary'),
-    btnRefreshServer: document.getElementById('btn-refresh-server'),
-
-    modalFilters: document.getElementById('modal-filters'),
-    rangeGap: document.getElementById('range-gap'),
-    valGap: document.getElementById('val-gap'),
-    rangeBrightness: document.getElementById('range-brightness'),
-    valBrightness: document.getElementById('val-brightness'),
-    rangeContrast: document.getElementById('range-contrast'),
-    valContrast: document.getElementById('val-contrast'),
-    checkInvert: document.getElementById('check-invert'),
-    checkGrayscale: document.getElementById('check-grayscale'),
-    checkPageBadges: document.getElementById('check-page-badges'),
-    checkSmoothScroll: document.getElementById('check-smooth-scroll'),
-    btnResetFilters: document.getElementById('btn-reset-filters'),
-
-    modalSpecs: document.getElementById('modal-specs'),
-    specsModalTitle: document.getElementById('specs-modal-title'),
-    specFolderName: document.getElementById('spec-folder-name'),
-    specPayloadSize: document.getElementById('spec-payload-size'),
-    specImageCount: document.getElementById('spec-image-count'),
-    specLastUpdate: document.getElementById('spec-last-update'),
-    specsManifestTbody: document.getElementById('specs-manifest-tbody'),
+    modalLibrary: document.getElementById('modal-library'),
+    libraryGrid: document.getElementById('library-grid'),
+    libraryCount: document.getElementById('library-count'),
+    btnLibrarySync: document.getElementById('btn-library-sync')
   };
-
-  // --- SAFE JSON FETCHER (Prevents "Unexpected token < <!doctype" crashes) ---
-  async function safeFetchJson(url, options = {}) {
-    try {
-      const res = await fetch(url, options);
-      if (!res.ok) {
-        return { ok: false, status: res.status, error: `HTTP ${res.status}` };
-      }
-      const contentType = res.headers.get('content-type') || '';
-      if (!contentType.includes('application/json')) {
-        // Returned HTML (e.g., 404 page or index.html from static dev server)
-        return { ok: false, error: 'Server returned HTML instead of JSON', isHtml: true };
-      }
-      const data = await res.json();
-      return { ok: true, data };
-    } catch (err) {
-      return { ok: false, error: err.message };
-    }
-  }
 
   // --- INITIALIZATION ---
   async function init() {
@@ -175,497 +103,437 @@
     setupDropZone();
     setupScrollMonitoring();
 
-    // Check if the Node server backend is active
-    await detectServerEnvironment();
+    // Populate settings inputs
+    el.inputGhRepo.value = state.ghConfig.repo;
+    el.inputGhToken.value = state.ghConfig.token;
+    el.inputGhBranch.value = state.ghConfig.branch;
+    el.inputGhPath.value = state.ghConfig.path;
+
+    // Check if GitHub is already configured
+    if (state.ghConfig.repo && state.ghConfig.token) {
+      await connectGitHub();
+    } else {
+      updateGitHubStatusUI(false);
+    }
   }
 
-  // --- DETECT SERVER ENVIRONMENT ---
-  async function detectServerEnvironment() {
-    const check = await safeFetchJson('/api/reads');
+  // --- GITHUB REPOSITORY CLOUD STORAGE API ---
+  async function ghRequest(endpoint, options = {}) {
+    if (!state.ghConfig.token) throw new Error('GitHub Personal Access Token not provided.');
+    const headers = {
+      'Accept': 'application/vnd.github.v3+json',
+      'Authorization': `Bearer ${state.ghConfig.token.trim()}`,
+      ...(options.headers || {})
+    };
+    const res = await fetch(`https://api.github.com${endpoint}`, { ...options, headers });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || `GitHub API error: HTTP ${res.status}`);
+    }
+    return res.json();
+  }
 
-    if (check.ok && check.data && check.data.success) {
-      // Backend is online
-      state.serverMode = true;
-      el.serverSyncStatus.textContent = '● SERVER DISK ACTIVE';
-      el.serverSyncStatus.className = 'sync-badge sync-online';
-      el.serverSyncStatus.title = 'Connected to Node.js backend. Uploads save to /data/reads/ and support physical disk reordering.';
+  async function connectGitHub() {
+    showLoading(true, 'Connecting to GitHub repository...', 30, state.ghConfig.repo);
+    try {
+      const repoData = await ghRequest(`/repos/${state.ghConfig.repo.trim()}`);
+      state.ghConnected = true;
+      updateGitHubStatusUI(true);
 
-      state.reads = check.data.reads;
-      updateHudUI();
-      updateShelfUI();
+      // Save to localStorage
+      localStorage.setItem('sr_gh_repo', state.ghConfig.repo.trim());
+      localStorage.setItem('sr_gh_token', state.ghConfig.token.trim());
+      localStorage.setItem('sr_gh_branch', state.ghConfig.branch.trim() || 'main');
+      localStorage.setItem('sr_gh_path', state.ghConfig.path.trim() || 'reads');
+
+      // Fetch existing reads from GitHub
+      await syncReadsFromGitHub();
+      showLoading(false);
+    } catch (err) {
+      showLoading(false);
+      state.ghConnected = false;
+      updateGitHubStatusUI(false);
+      alert('Could not connect to GitHub repository: ' + err.message);
+    }
+  }
+
+  function updateGitHubStatusUI(connected) {
+    if (connected) {
+      el.githubDot.classList.add('connected');
+      el.githubStatusText.textContent = state.ghConfig.repo;
+    } else {
+      el.githubDot.classList.remove('connected');
+      el.githubStatusText.textContent = 'Connect GitHub';
+    }
+  }
+
+  // Sync existing reads from the user's GitHub repo folder
+  async function syncReadsFromGitHub() {
+    if (!state.ghConnected) return;
+
+    try {
+      const cleanPath = (state.ghConfig.path || 'reads').replace(/^\/|\/$/g, '');
+      const contents = await ghRequest(`/repos/${state.ghConfig.repo}/contents/${cleanPath}?ref=${state.ghConfig.branch}`).catch(() => []);
+
+      const folders = contents.filter(item => item.type === 'dir');
+      const loadedReads = [];
+
+      for (const dir of folders) {
+        try {
+          const files = await ghRequest(`/repos/${state.ghConfig.repo}/contents/${dir.path}?ref=${state.ghConfig.branch}`);
+
+          // Check if manifest exists
+          const manifestFile = files.find(f => f.name === 'manifest.json');
+          let manifest = null;
+          if (manifestFile) {
+            const manifestRes = await fetch(manifestFile.download_url);
+            manifest = await manifestRes.json();
+          }
+
+          // Image files
+          const imageFiles = files.filter(f => {
+            const ext = f.name.split('.').pop().toLowerCase();
+            return IMAGE_EXTS.has(ext);
+          });
+
+          // Order images: use manifest order if available, otherwise natural sort
+          if (manifest && manifest.pages && manifest.pages.length > 0) {
+            const orderMap = new Map();
+            manifest.pages.forEach((p, idx) => orderMap.set(p.filename, idx));
+            imageFiles.sort((a, b) => {
+              const oA = orderMap.has(a.name) ? orderMap.get(a.name) : 9999;
+              const oB = orderMap.has(b.name) ? orderMap.get(b.name) : 9999;
+              return oA - oB;
+            });
+          } else {
+            imageFiles.sort((a, b) => collator.compare(a.name, b.name));
+          }
+
+          const pages = imageFiles.map((f, idx) => ({
+            index: idx + 1,
+            filename: f.name,
+            url: f.download_url,
+            size: f.size,
+            sha: f.sha
+          }));
+
+          if (pages.length > 0) {
+            loadedReads.push({
+              id: dir.name,
+              title: manifest?.title || dir.name.replace(/_/g, ' '),
+              path: dir.path,
+              pages: pages,
+              pageCount: pages.length,
+              isGitHub: true
+            });
+          }
+        } catch (e) {
+          console.warn(`Could not load folder ${dir.name}:`, e);
+        }
+      }
+
+      state.reads = loadedReads;
+      updateLibraryUI();
 
       if (state.reads.length > 0) {
-        await loadRead(0);
+        loadRead(0);
       } else {
         showEmptyState();
       }
-
-      startSyncPolling();
-    } else {
-      // Backend is NOT running on this port (e.g. user opened with Live Server, Python, or static host)
-      state.serverMode = false;
-      el.serverSyncStatus.textContent = '⚡ IN-BROWSER MODE (OFFLINE)';
-      el.serverSyncStatus.className = 'sync-badge sync-offline';
-      el.serverSyncStatus.title = 'No Node server detected on this port. Running in 100% private in-browser mode.';
-
-      console.info('[STRIP//ZIP] Running in local in-browser mode. To enable server disk storage, run: npm start (or node server.js) and open http://localhost:3000');
-      showEmptyState();
+    } catch (err) {
+      console.warn('Error reading from GitHub:', err);
     }
   }
 
-  // --- SERVER READS LOADER ---
-  async function loadRead(index) {
-    if (index < 0 || index >= state.reads.length) return;
-    const summary = state.reads[index];
+  // Commit a newly uploaded read directly into the user's GitHub repository
+  async function saveReadToGitHub(read) {
+    if (!state.ghConnected) return;
 
-    if (state.serverMode) {
-      const result = await safeFetchJson(`/api/reads/${encodeURIComponent(summary.id)}`);
-      if (result.ok && result.data.success) {
-        state.activeReadIndex = index;
-        state.currentRead = result.data.read;
-        state.lastKnownUpdate = result.data.read.updatedAt;
-        state.pagedIndex = 0;
+    const cleanPath = (state.ghConfig.path || 'reads').replace(/^\/|\/$/g, '');
+    const folderPath = `${cleanPath}/${read.id}`;
 
-        if (state.isEditing) exitEditMode();
-        renderActiveRead();
-        updateHudUI();
-        updateShelfUI();
-      } else {
-        console.warn('Could not load read from server:', result.error);
-      }
-    } else {
-      // In-browser read
-      state.activeReadIndex = index;
-      state.currentRead = state.reads[index];
-      state.pagedIndex = 0;
-      if (state.isEditing) exitEditMode();
-      renderActiveRead();
-      updateHudUI();
-      updateShelfUI();
-    }
-  }
+    showLoading(true, 'Saving read to your GitHub repository...', 0, 'Committing pages...');
 
-  // --- UNIFIED FILE DISPATCHER ---
-  async function handleFilesSelected(fileList) {
-    if (!fileList || fileList.length === 0) return;
+    for (let i = 0; i < read.pages.length; i++) {
+      const page = read.pages[i];
+      const pct = Math.round(((i + 1) / read.pages.length) * 90);
+      updateLoading(`Saving page ${i + 1} of ${read.pages.length} to GitHub...`, pct, page.filename);
 
-    if (state.serverMode) {
-      // Route through server backend
-      uploadFilesToServer(fileList);
-    } else {
-      // Route through in-browser client JSZip engine
-      await processArchivesInBrowser(fileList);
-    }
-  }
+      // Convert page blob / data to base64
+      const base64 = await blobToBase64(page.blob);
 
-  // --- 1. SERVER UPLOAD PIPELINE ---
-  function uploadFilesToServer(fileList) {
-    const formData = new FormData();
-    for (let i = 0; i < fileList.length; i++) {
-      formData.append('files', fileList[i]);
+      // Commit file to GitHub via PUT /repos/{owner}/{repo}/contents/{path}
+      await ghRequest(`/repos/${state.ghConfig.repo}/contents/${folderPath}/${page.filename}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          message: `Add ${read.title} - ${page.filename}`,
+          content: base64,
+          branch: state.ghConfig.branch
+        })
+      });
     }
 
-    showLoading(true, 'UPLOADING TO SERVER DISK...', 0, `Uploading ${fileList.length} file(s)...`);
-
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', '/api/upload');
-
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable) {
-        const pct = Math.round((e.loaded / e.total) * 100);
-        updateLoading(
-          pct < 100 ? 'UPLOADING TO SERVER...' : 'SERVER 7z EXTRACTING & ORGANIZING FOLDERS...',
-          pct,
-          `${(e.loaded / (1024 * 1024)).toFixed(1)} MB / ${(e.total / (1024 * 1024)).toFixed(1)} MB`
-        );
-      }
+    // Write manifest.json
+    const manifest = {
+      title: read.title,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      pages: read.pages.map(p => ({ filename: p.filename, order: p.index }))
     };
 
-    xhr.onload = async () => {
-      showLoading(false);
-      try {
-        const contentType = xhr.getResponseHeader('content-type') || '';
-        if (!contentType.includes('application/json')) {
-          alert('Upload failed: Server returned non-JSON response. Please ensure "node server.js" is running on port 3000.');
-          return;
-        }
+    const manifestBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(manifest, null, 2))));
+    await ghRequest(`/repos/${state.ghConfig.repo}/contents/${folderPath}/manifest.json`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        message: `Add manifest for ${read.title}`,
+        content: manifestBase64,
+        branch: state.ghConfig.branch
+      })
+    });
 
-        const res = JSON.parse(xhr.responseText);
-        if (res.success) {
-          await refreshServerReads(res.reads[0]?.id);
-        } else {
-          alert('Upload failed: ' + res.error);
-        }
-      } catch (err) {
-        alert('Server response parsing error: ' + err.message);
-      }
-    };
-
-    xhr.onerror = () => {
-      showLoading(false);
-      alert('Network error while uploading to server.');
-    };
-
-    xhr.send(formData);
+    read.isGitHub = true;
+    showLoading(false);
   }
 
-  async function refreshServerReads(autoSelectId = null) {
-    const check = await safeFetchJson('/api/reads');
-    if (check.ok && check.data.success) {
-      state.reads = check.data.reads;
-      updateHudUI();
-      updateShelfUI();
+  // Update manifest.json on GitHub when user reorders pages in Edit Mode
+  async function updateManifestOnGitHub(readId, orderedFilenames) {
+    if (!state.ghConnected) return;
 
-      let targetIndex = 0;
-      if (autoSelectId) {
-        const found = state.reads.findIndex(r => r.id === autoSelectId);
-        if (found !== -1) targetIndex = found;
-      }
-      await loadRead(targetIndex);
-    }
-  }
+    showLoading(true, 'Updating page order in GitHub repository...', 50, 'Saving manifest.json');
+    const cleanPath = (state.ghConfig.path || 'reads').replace(/^\/|\/$/g, '');
+    const manifestPath = `${cleanPath}/${readId}/manifest.json`;
 
-  // --- 2. IN-BROWSER CLIENT-SIDE PARSER (OFFLINE FALLBACK) ---
-  async function processArchivesInBrowser(fileList) {
-    if (typeof JSZip === 'undefined') {
-      alert('JSZip library is not loaded. Please ensure js/jszip.min.js is present.');
-      return;
+    // Get current manifest sha to overwrite
+    let currentSha = null;
+    try {
+      const existing = await ghRequest(`/repos/${state.ghConfig.repo}/contents/${manifestPath}?ref=${state.ghConfig.branch}`);
+      currentSha = existing.sha;
+    } catch (e) {
+      // Manifest does not exist yet
     }
 
-    const files = Array.from(fileList);
-    const zipFiles = files.filter(f => f.name.toLowerCase().endsWith('.zip') || f.name.toLowerCase().endsWith('.cbz') || f.type.includes('zip'));
+    const manifest = {
+      title: state.currentRead.title,
+      updatedAt: Date.now(),
+      pages: orderedFilenames.map((fn, idx) => ({ filename: fn, order: idx + 1 }))
+    };
 
-    if (zipFiles.length === 0) {
-      alert('In-browser mode currently supports .zip and .cbz archives. To unpack .rar archives or store directly on disk, run "npm start" to enable Server Disk Mode.');
-      return;
-    }
+    const manifestBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(manifest, null, 2))));
+    const body = {
+      message: `Update page order for ${state.currentRead.title}`,
+      content: manifestBase64,
+      branch: state.ghConfig.branch
+    };
+    if (currentSha) body.sha = currentSha;
 
-    showLoading(true, 'EXTRACTING IN BROWSER RAM...', 0, `Processing ${zipFiles.length} archive(s)...`);
-
-    for (let i = 0; i < zipFiles.length; i++) {
-      const file = zipFiles[i];
-      updateLoading(
-        `UNPACKING [${i + 1}/${zipFiles.length}]: ${file.name}`,
-        Math.round((i / zipFiles.length) * 100),
-        'Decompressing image streams in browser memory...'
-      );
-
-      try {
-        const zip = new JSZip();
-        const loadedZip = await zip.loadAsync(file);
-        const entries = [];
-
-        loadedZip.forEach((relPath, entry) => {
-          if (entry.dir || relPath.includes('__MACOSX/') || relPath.startsWith('.')) return;
-          const ext = relPath.split('.').pop().toLowerCase();
-          if (IMAGE_EXTENSIONS.has(ext)) entries.push(entry);
-        });
-
-        if (entries.length === 0) {
-          throw new Error(`Archive ${file.name} contains no valid image files.`);
-        }
-
-        // Natural sequence sorting
-        entries.sort((a, b) => collator.compare(a.name, b.name));
-
-        const pages = [];
-        let totalPayload = 0;
-        for (let j = 0; j < entries.length; j++) {
-          const entry = entries[j];
-          const blob = await entry.async('blob');
-          const url = URL.createObjectURL(blob);
-          totalPayload += blob.size;
-          const ext = entry.name.split('.').pop().toLowerCase();
-
-          pages.push({
-            index: j + 1,
-            filename: entry.name,
-            url: url,
-            size: blob.size,
-            ext: ext,
-            isBlob: true
-          });
-        }
-
-        const readData = {
-          id: 'local_' + Date.now() + '_' + i,
-          title: file.name.replace(/\.[^/.]+$/, ''),
-          folderName: '(Local Browser Memory)',
-          pageCount: pages.length,
-          pages: pages,
-          totalSize: totalPayload,
-          firstPageUrl: pages[0]?.url || '',
-          updatedAt: Date.now()
-        };
-
-        state.reads.push(readData);
-      } catch (err) {
-        console.error('Error unpacking in browser:', err);
-        alert(`Error unpacking ${file.name}: ${err.message}`);
-      }
-    }
+    await ghRequest(`/repos/${state.ghConfig.repo}/contents/${manifestPath}`, {
+      method: 'PUT',
+      body: JSON.stringify(body)
+    });
 
     showLoading(false);
-    updateHudUI();
-    updateShelfUI();
-
-    if (state.activeReadIndex === -1 && state.reads.length > 0) {
-      await loadRead(0);
-    }
   }
 
-  // --- EVENT LISTENERS ---
-  function setupEventListeners() {
-    el.fileInput.addEventListener('change', (e) => {
-      handleFilesSelected(e.target.files);
-      el.fileInput.value = '';
-    });
-    el.drawerFileInput.addEventListener('change', (e) => {
-      handleFilesSelected(e.target.files);
-      el.drawerFileInput.value = '';
-    });
-    el.btnAddFilesHud.addEventListener('click', () => el.fileInput.click());
+  // --- FILE HANDLING PIPELINE (ZIP, RAR, IMAGES) ---
+  async function handleFilesSelected(fileList) {
+    if (!fileList || fileList.length === 0) return;
+    const files = Array.from(fileList);
 
-    // Demo archive generation
-    el.btnLoadDemo.addEventListener('click', createDemoReads);
+    const archives = [];
+    const images = [];
 
-    // Read navigation
-    el.btnPrevRead.addEventListener('click', () => switchRead(state.activeReadIndex - 1));
-    el.btnNextRead.addEventListener('click', () => switchRead(state.activeReadIndex + 1));
-    el.btnFooterPrevRead.addEventListener('click', () => switchRead(state.activeReadIndex - 1));
-    el.btnFooterNextRead.addEventListener('click', () => switchRead(state.activeReadIndex + 1));
-    el.btnReadSelector.addEventListener('click', toggleReadsDrawer);
-    el.btnLibraryToggle.addEventListener('click', toggleReadsDrawer);
-
-    // Drawer
-    el.btnCloseDrawer.addEventListener('click', closeReadsDrawer);
-    el.drawerBackdrop.addEventListener('click', closeReadsDrawer);
-    el.btnRefreshServer.addEventListener('click', () => {
-      if (state.serverMode) refreshServerReads();
-      else updateShelfUI();
-    });
-
-    // Footer actions
-    el.btnFooterTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
-
-    // Strip width selector
-    el.selectStripWidth.addEventListener('change', (e) => {
-      state.stripWidth = e.target.value;
-      el.stripOuter.className = `strip-outer width-${state.stripWidth}`;
-    });
-
-    // Reading mode selector
-    el.selectReadMode.addEventListener('change', (e) => {
-      state.readingMode = e.target.value;
-      renderActiveRead();
-    });
-
-    // Edit Mode buttons
-    el.btnEnterEdit.addEventListener('click', toggleEditMode);
-    el.btnBannerEdit.addEventListener('click', toggleEditMode);
-    el.btnSaveOrder.addEventListener('click', saveReorderedPages);
-    el.btnResetOrder.addEventListener('click', resetEditOrder);
-    el.btnExitEdit.addEventListener('click', exitEditMode);
-
-    // Delete read button
-    el.btnBannerDeleteRead.addEventListener('click', deleteCurrentRead);
-
-    // Filters modal
-    el.btnToggleFilters.addEventListener('click', () => openModal(el.modalFilters));
-    el.rangeGap.addEventListener('input', (e) => {
-      state.gap = parseInt(e.target.value, 10);
-      el.valGap.textContent = state.gap === 0 ? '0px (Seamless Strip)' : `${state.gap}px`;
-      updateFiltersStyle();
-    });
-    el.rangeBrightness.addEventListener('input', (e) => {
-      state.brightness = parseInt(e.target.value, 10);
-      el.valBrightness.textContent = `${state.brightness}%`;
-      updateFiltersStyle();
-    });
-    el.rangeContrast.addEventListener('input', (e) => {
-      state.contrast = parseInt(e.target.value, 10);
-      el.valContrast.textContent = `${state.contrast}%`;
-      updateFiltersStyle();
-    });
-    el.checkInvert.addEventListener('change', (e) => {
-      state.invert = e.target.checked;
-      updateFiltersStyle();
-    });
-    el.checkGrayscale.addEventListener('change', (e) => {
-      state.grayscale = e.target.checked;
-      updateFiltersStyle();
-    });
-    el.checkPageBadges.addEventListener('change', (e) => {
-      state.showBadges = e.target.checked;
-      document.querySelectorAll('.page-badge-overlay').forEach(b => {
-        b.style.display = state.showBadges ? 'inline-flex' : 'none';
-      });
-    });
-    el.checkSmoothScroll.addEventListener('change', (e) => {
-      state.smoothScroll = e.target.checked;
-      document.documentElement.style.scrollBehavior = state.smoothScroll ? 'smooth' : 'auto';
-    });
-    el.btnResetFilters.addEventListener('click', resetFilters);
-
-    // Canvas background swatches
-    document.querySelectorAll('.bg-swatch').forEach(swatch => {
-      swatch.addEventListener('click', () => {
-        document.querySelectorAll('.bg-swatch').forEach(s => s.classList.remove('active'));
-        swatch.classList.add('active');
-        const bg = swatch.dataset.bg;
-        document.body.style.backgroundColor = bg;
-        el.stripContainer.style.backgroundColor = bg;
-      });
-    });
-
-    // Technical Specs Modal
-    el.btnOpenSpecs.addEventListener('click', openSpecsModal);
-    el.btnBannerSpecs.addEventListener('click', openSpecsModal);
-
-    // Modal close buttons
-    document.querySelectorAll('[data-close]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const modalId = btn.dataset.close;
-        const target = document.getElementById(modalId);
-        if (target) closeModal(target);
-      });
-    });
-
-    // Fullscreen toggle
-    el.btnFullscreen.addEventListener('click', toggleFullscreen);
-
-    // Radar buttons
-    el.btnRadarTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
-    el.btnRadarBottom.addEventListener('click', () => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }));
-    el.radarScrubTrack.addEventListener('click', handleScrubTrackClick);
-
-    // Paged controls
-    el.btnPagedPrev.addEventListener('click', () => stepPage(-1));
-    el.btnPagedNext.addEventListener('click', () => stepPage(1));
-
-    // Global Keyboard Shortcuts
-    window.addEventListener('keydown', handleGlobalKeydown);
-  }
-
-  // --- DRAG AND DROP ZONE ---
-  function setupDropZone() {
-    const zone = el.dropZone;
-    const box = zone.querySelector('.drop-box');
-
-    ['dragenter', 'dragover'].forEach(name => {
-      window.addEventListener(name, (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        box.classList.add('drag-over');
-      });
-    });
-
-    ['dragleave', 'drop'].forEach(name => {
-      window.addEventListener(name, (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        box.classList.remove('drag-over');
-      });
-    });
-
-    window.addEventListener('drop', (e) => {
-      const files = e.dataTransfer.files;
-      if (files && files.length > 0) {
-        handleFilesSelected(files);
+    for (const file of files) {
+      const ext = file.name.split('.').pop().toLowerCase();
+      if (['zip', 'cbz'].includes(ext)) {
+        archives.push(file);
+      } else if (['rar', 'cbr', '7z'].includes(ext)) {
+        archives.push(file);
+      } else if (IMAGE_EXTS.has(ext)) {
+        images.push(file);
       }
+    }
+
+    // Process ZIP / CBZ archives
+    for (const arch of archives) {
+      const ext = arch.name.split('.').pop().toLowerCase();
+      if (['zip', 'cbz'].includes(ext)) {
+        await unpackZipArchive(arch);
+      } else {
+        // RAR / 7Z notice
+        alert(`RAR archive "${arch.name}" detected. ZIP and raw images are recommended for static GitHub hosting. Please convert to ZIP or extract images before uploading.`);
+      }
+    }
+
+    // Process loose images uploaded together
+    if (images.length > 0) {
+      await processLooseImages(images);
+    }
+  }
+
+  // Unpack ZIP directly in browser
+  async function unpackZipArchive(file) {
+    showLoading(true, `Unpacking ${file.name}...`, 20, 'Reading archive entries');
+
+    try {
+      const zip = new JSZip();
+      const loadedZip = await zip.loadAsync(file);
+      const entries = [];
+
+      loadedZip.forEach((relPath, entry) => {
+        if (entry.dir || relPath.includes('__MACOSX/') || relPath.startsWith('.')) return;
+        const ext = relPath.split('.').pop().toLowerCase();
+        if (IMAGE_EXTS.has(ext)) entries.push(entry);
+      });
+
+      if (entries.length === 0) {
+        throw new Error('No valid images (JPG, PNG, WEBP) found in archive.');
+      }
+
+      // Natural sort
+      entries.sort((a, b) => collator.compare(a.name, b.name));
+
+      const pages = [];
+      for (let i = 0; i < entries.length; i++) {
+        const entry = entries[i];
+        const blob = await entry.async('blob');
+        const url = URL.createObjectURL(blob);
+        pages.push({
+          index: i + 1,
+          filename: entry.name.split('/').pop(),
+          url: url,
+          blob: blob,
+          size: blob.size
+        });
+      }
+
+      const readId = sanitizeId(file.name.replace(/\.[^/.]+$/, ''));
+      const newRead = {
+        id: readId,
+        title: file.name.replace(/\.[^/.]+$/, ''),
+        pages: pages,
+        pageCount: pages.length,
+        isGitHub: false
+      };
+
+      state.reads.push(newRead);
+      updateLibraryUI();
+      loadRead(state.reads.length - 1);
+      showLoading(false);
+
+      // If GitHub is connected, save to repository
+      if (state.ghConnected) {
+        await saveReadToGitHub(newRead);
+      }
+    } catch (err) {
+      showLoading(false);
+      alert(`Could not extract ${file.name}: ` + err.message);
+    }
+  }
+
+  // Process a batch of loose images
+  async function processLooseImages(files) {
+    showLoading(true, 'Processing image batch...', 30, `${files.length} images`);
+
+    files.sort((a, b) => collator.compare(a.name, b.name));
+
+    const pages = files.map((file, idx) => ({
+      index: idx + 1,
+      filename: file.name,
+      url: URL.createObjectURL(file),
+      blob: file,
+      size: file.size
+    }));
+
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const title = `Image Set ${dateStr}`;
+    const readId = `images_${Date.now()}`;
+
+    const newRead = {
+      id: readId,
+      title: title,
+      pages: pages,
+      pageCount: pages.length,
+      isGitHub: false
+    };
+
+    state.reads.push(newRead);
+    updateLibraryUI();
+    loadRead(state.reads.length - 1);
+    showLoading(false);
+
+    if (state.ghConnected) {
+      await saveReadToGitHub(newRead);
+    }
+  }
+
+  function sanitizeId(str) {
+    return str.replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_').toLowerCase();
+  }
+
+  function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
     });
   }
 
-  // --- READ SWITCHING ---
-  function switchRead(newIndex) {
-    if (state.reads.length === 0) return;
-    if (newIndex < 0) newIndex = 0;
-    if (newIndex >= state.reads.length) newIndex = state.reads.length - 1;
-    loadRead(newIndex);
+  // --- READING & STRIP RENDERING ---
+  function loadRead(index) {
+    if (index < 0 || index >= state.reads.length) return;
+    state.activeReadIndex = index;
+    state.currentRead = state.reads[index];
+
+    if (state.isEditing) exitEditMode();
+
+    renderActiveRead();
+    updateNavUI();
   }
 
-  function showEmptyState() {
-    el.readerView.classList.add('hidden');
-    el.readSwitcher.classList.add('hidden');
-    el.hudTelemetry.classList.add('hidden');
-    el.btnEnterEdit.classList.add('hidden');
-    el.quickRadar.classList.add('hidden');
-    el.dropZone.classList.remove('hidden');
-  }
-
-  // --- RENDER ACTIVE READ ---
   function renderActiveRead() {
-    const currentRead = state.currentRead;
-    if (!currentRead) return;
+    const read = state.currentRead;
+    if (!read) return;
 
-    if (state.pageObserver) {
-      state.pageObserver.disconnect();
-    }
+    if (state.pageObserver) state.pageObserver.disconnect();
 
     el.dropZone.classList.add('hidden');
     el.readerView.classList.remove('hidden');
-    el.readSwitcher.classList.remove('hidden');
-    el.hudTelemetry.classList.remove('hidden');
-    el.btnEnterEdit.classList.remove('hidden');
-    el.quickRadar.classList.remove('hidden');
+    el.readNav.classList.remove('hidden');
+    el.telemetryBox.classList.remove('hidden');
+    el.btnEditOrder.classList.remove('hidden');
 
-    el.readerArchiveName.textContent = currentRead.title || currentRead.folderName;
-    el.readerArchiveSub.textContent = state.serverMode
-      ? `Server Folder: /data/reads/${currentRead.folderName} • ${currentRead.pages.length} Pages • ${(currentRead.totalSize / (1024 * 1024)).toFixed(2)} MB`
-      : `In-Browser RAM • ${currentRead.pages.length} Pages • ${(currentRead.totalSize / (1024 * 1024)).toFixed(2)} MB`;
-
-    const hasNext = state.activeReadIndex < state.reads.length - 1;
-    if (hasNext) {
-      const nextRead = state.reads[state.activeReadIndex + 1];
-      el.footerNextText.textContent = `Next read: ${nextRead.title || nextRead.folderName} (${nextRead.pageCount || nextRead.pages?.length} pages)`;
-      el.btnFooterNextRead.classList.remove('hidden');
-    } else {
-      el.footerNextText.textContent = `You have reached the end of all ${state.reads.length} loaded reads.`;
-      el.btnFooterNextRead.classList.add('hidden');
-    }
+    el.activeReadTitle.textContent = read.title;
+    el.activeReadCount.textContent = `${read.pages.length} P`;
 
     el.stripContainer.innerHTML = '';
-    if (state.readingMode === 'long-strip') {
-      el.pagedControls.classList.add('hidden');
-      renderLongStrip(currentRead);
-    } else {
-      el.pagedControls.classList.remove('hidden');
-      renderPagedMode(currentRead);
-    }
-  }
-
-  // --- CONTINUOUS LONG STRIP RENDERER ---
-  function renderLongStrip(currentRead) {
     const fragment = document.createDocumentFragment();
 
     state.pageObserver = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
-          const pageIndex = parseInt(entry.target.dataset.pageIndex, 10);
-          updateTelemetryCurrentPage(pageIndex);
+          const idx = parseInt(entry.target.dataset.pageIndex, 10);
+          updateTelemetry(idx);
         }
       });
-    }, {
-      rootMargin: '-30% 0px -50% 0px',
-      threshold: 0
-    });
+    }, { rootMargin: '-20% 0px -60% 0px' });
 
-    currentRead.pages.forEach((page) => {
+    read.pages.forEach(page => {
       const pageEl = document.createElement('div');
       pageEl.className = 'strip-page';
-      pageEl.id = `page-frame-${page.index}`;
       pageEl.dataset.pageIndex = page.index;
 
       const badge = document.createElement('div');
-      badge.className = 'page-badge-overlay';
-      badge.innerHTML = `<span class="page-badge-num">#${String(page.index).padStart(2, '0')}</span><span>•</span><span>${page.filename}</span>`;
-      if (!state.showBadges) badge.style.display = 'none';
+      badge.className = 'page-badge';
+      badge.textContent = `#${page.index}`;
 
       const img = document.createElement('img');
       img.src = page.url;
       img.alt = page.filename;
       img.loading = 'lazy';
-      img.decoding = 'async';
 
       pageEl.appendChild(badge);
       pageEl.appendChild(img);
@@ -675,66 +543,33 @@
     });
 
     el.stripContainer.appendChild(fragment);
-    updateFiltersStyle();
+    window.scrollTo({ top: 0, behavior: 'auto' });
   }
 
-  // --- PAGED / DOUBLE SPREAD MODE ---
-  function renderPagedMode(currentRead) {
-    el.stripContainer.innerHTML = '';
-    const pages = currentRead.pages;
-    const isDouble = state.readingMode === 'double-spread';
-
-    const p1 = pages[state.pagedIndex];
-    const p2 = isDouble && state.pagedIndex + 1 < pages.length ? pages[state.pagedIndex + 1] : null;
-
-    const row = document.createElement('div');
-    row.style.display = 'flex';
-    row.style.gap = '12px';
-    row.style.justifyContent = 'center';
-    row.style.alignItems = 'center';
-    row.style.minHeight = '70vh';
-
-    if (p1) {
-      const img1 = document.createElement('img');
-      img1.src = p1.url;
-      img1.style.maxWidth = isDouble ? '48%' : '90%';
-      img1.style.maxHeight = '85vh';
-      img1.style.objectFit = 'contain';
-      row.appendChild(img1);
-    }
-
-    if (p2) {
-      const img2 = document.createElement('img');
-      img2.src = p2.url;
-      img2.style.maxWidth = '48%';
-      img2.style.maxHeight = '85vh';
-      img2.style.objectFit = 'contain';
-      row.appendChild(img2);
-    }
-
-    el.stripContainer.appendChild(row);
-
-    const currentNum = state.pagedIndex + 1;
-    const displayNum = p2 ? `${currentNum}-${currentNum + 1}` : `${currentNum}`;
-    el.pagedIndicator.textContent = `PAGE ${displayNum} / ${pages.length}`;
-    updateTelemetryCurrentPage(currentNum);
+  function updateTelemetry(pageNum) {
+    if (!state.currentRead) return;
+    el.telemPage.textContent = String(pageNum).padStart(2, '0');
+    el.telemTotal.textContent = String(state.currentRead.pages.length).padStart(2, '0');
   }
 
-  function stepPage(delta) {
-    const currentRead = state.currentRead;
-    if (!currentRead) return;
-    const step = state.readingMode === 'double-spread' ? 2 : 1;
-    const nextIdx = state.pagedIndex + (delta * step);
-
-    if (nextIdx >= 0 && nextIdx < currentRead.pages.length) {
-      state.pagedIndex = nextIdx;
-      renderPagedMode(currentRead);
-    }
+  function setupScrollMonitoring() {
+    // Basic telemetry tracking
   }
 
-  // ===========================================================================
-  // EDIT MODE & REORDERING ENGINE
-  // ===========================================================================
+  function showEmptyState() {
+    el.readerView.classList.add('hidden');
+    el.readNav.classList.add('hidden');
+    el.telemetryBox.classList.add('hidden');
+    el.btnEditOrder.classList.add('hidden');
+    el.dropZone.classList.remove('hidden');
+  }
+
+  function updateNavUI() {
+    el.btnPrevRead.disabled = state.activeReadIndex <= 0;
+    el.btnNextRead.disabled = state.activeReadIndex >= state.reads.length - 1;
+  }
+
+  // --- EDIT ORDER MODE ---
   function toggleEditMode() {
     if (state.isEditing) exitEditMode();
     else enterEditMode();
@@ -746,28 +581,20 @@
     state.stagedPages = JSON.parse(JSON.stringify(state.currentRead.pages));
     state.hasUnsavedChanges = false;
 
-    el.btnEnterEdit.classList.add('active');
-    el.btnBannerEdit.textContent = '✕ EXIT EDIT MODE';
-    el.editModeBar.classList.remove('hidden');
-    el.editGridContainer.classList.remove('hidden');
+    el.btnEditOrder.textContent = '✕ Exit Edit';
+    el.editBar.classList.remove('hidden');
+    el.editCardsContainer.classList.remove('hidden');
     el.stripOuter.classList.add('hidden');
 
     renderEditCards();
-    updateEditBarStatus();
   }
 
   function exitEditMode() {
-    if (state.hasUnsavedChanges) {
-      const confirmExit = confirm('You have unsaved page order changes. Discard and exit edit mode?');
-      if (!confirmExit) return;
-    }
-
     state.isEditing = false;
     state.hasUnsavedChanges = false;
-    el.btnEnterEdit.classList.remove('active');
-    el.btnBannerEdit.textContent = '✏️ EDIT PAGE ORDER';
-    el.editModeBar.classList.add('hidden');
-    el.editGridContainer.classList.add('hidden');
+    el.btnEditOrder.textContent = 'Edit Order';
+    el.editBar.classList.add('hidden');
+    el.editCardsContainer.classList.add('hidden');
     el.stripOuter.classList.remove('hidden');
 
     renderActiveRead();
@@ -783,23 +610,18 @@
       card.draggable = true;
 
       card.innerHTML = `
-        <div class="edit-card-handle" title="Drag to reorder">⠿</div>
-        <div class="edit-card-num">#${String(idx + 1).padStart(2, '0')}</div>
+        <div class="edit-card-handle">⠿</div>
+        <div class="edit-card-num">#${idx + 1}</div>
         <img class="edit-card-thumb" src="${page.url}" alt="${page.filename}">
-        <div class="edit-card-info">
-          <div class="edit-card-title">${page.filename}</div>
-          <div class="edit-card-meta">${(page.size / 1024).toFixed(1)} KB • ${(page.ext || 'IMG').toUpperCase()}</div>
-        </div>
+        <div class="edit-card-title">${page.filename}</div>
         <div class="edit-card-actions">
-          <button class="card-btn-arrow btn-up" title="Move Up" ${idx === 0 ? 'disabled' : ''}>▲</button>
-          <button class="card-btn-arrow btn-down" title="Move Down" ${idx === state.stagedPages.length - 1 ? 'disabled' : ''}>▼</button>
-          <button class="card-btn-delete" title="Delete page">🗑️</button>
+          <button class="btn btn-small btn-up" ${idx === 0 ? 'disabled' : ''}>▲</button>
+          <button class="btn btn-small btn-down" ${idx === state.stagedPages.length - 1 ? 'disabled' : ''}>▼</button>
         </div>
       `;
 
       card.querySelector('.btn-up').addEventListener('click', () => movePage(idx, -1));
       card.querySelector('.btn-down').addEventListener('click', () => movePage(idx, 1));
-      card.querySelector('.card-btn-delete').addEventListener('click', () => deletePage(idx));
 
       card.addEventListener('dragstart', handleDragStart);
       card.addEventListener('dragover', handleDragOver);
@@ -808,48 +630,37 @@
 
       el.editCardsList.appendChild(card);
     });
+
+    el.btnSaveOrder.disabled = !state.hasUnsavedChanges;
   }
 
   function movePage(index, delta) {
-    const targetIdx = index + delta;
-    if (targetIdx < 0 || targetIdx >= state.stagedPages.length) return;
-
+    const target = index + delta;
+    if (target < 0 || target >= state.stagedPages.length) return;
     const [moved] = state.stagedPages.splice(index, 1);
-    state.stagedPages.splice(targetIdx, 0, moved);
-
+    state.stagedPages.splice(target, 0, moved);
     state.hasUnsavedChanges = true;
     renderEditCards();
-    updateEditBarStatus();
   }
 
   function handleDragStart(e) {
     state.dragSrcIndex = parseInt(this.dataset.index, 10);
     this.classList.add('dragging');
-    e.dataTransfer.effectAllowed = 'move';
   }
-
   function handleDragOver(e) {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    const targetCard = e.currentTarget;
-    if (targetCard && !targetCard.classList.contains('dragging')) {
-      document.querySelectorAll('.edit-card').forEach(c => c.classList.remove('drag-over'));
-      targetCard.classList.add('drag-over');
-    }
+    this.classList.add('drag-over');
   }
-
   function handleDrop(e) {
     e.stopPropagation();
-    const destIndex = parseInt(this.dataset.index, 10);
-    if (state.dragSrcIndex !== null && state.dragSrcIndex !== destIndex) {
+    const dest = parseInt(this.dataset.index, 10);
+    if (state.dragSrcIndex !== null && state.dragSrcIndex !== dest) {
       const [moved] = state.stagedPages.splice(state.dragSrcIndex, 1);
-      state.stagedPages.splice(destIndex, 0, moved);
+      state.stagedPages.splice(dest, 0, moved);
       state.hasUnsavedChanges = true;
       renderEditCards();
-      updateEditBarStatus();
     }
   }
-
   function handleDragEnd() {
     state.dragSrcIndex = null;
     document.querySelectorAll('.edit-card').forEach(c => {
@@ -858,388 +669,211 @@
     });
   }
 
-  function resetEditOrder() {
-    state.stagedPages = JSON.parse(JSON.stringify(state.currentRead.pages));
-    state.hasUnsavedChanges = false;
-    renderEditCards();
-    updateEditBarStatus();
-  }
-
-  function updateEditBarStatus() {
-    if (state.hasUnsavedChanges) {
-      el.editChangesCount.textContent = '● Changes pending save';
-      el.btnSaveOrder.disabled = false;
-    } else {
-      el.editChangesCount.textContent = 'No changes';
-      el.btnSaveOrder.disabled = true;
-    }
-  }
-
-  async function saveReorderedPages() {
+  async function saveOrder() {
     if (!state.currentRead || !state.hasUnsavedChanges) return;
 
-    if (state.serverMode) {
-      // Physically rename on server disk
-      const orderedFilenames = state.stagedPages.map(p => p.filename);
-      showLoading(true, 'SAVING TO SERVER DISK...', 50, 'Physically re-sequencing files in server folder...');
+    // Update read in state
+    state.currentRead.pages = state.stagedPages.map((p, idx) => ({ ...p, index: idx + 1 }));
+    state.hasUnsavedChanges = false;
 
-      const result = await safeFetchJson(`/api/reads/${encodeURIComponent(state.currentRead.id)}/reorder`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderedFilenames })
-      });
-
-      showLoading(false);
-
-      if (result.ok && result.data.success) {
-        state.currentRead = result.data.read;
-        state.lastKnownUpdate = result.data.read.updatedAt;
-        state.hasUnsavedChanges = false;
-        alert('✅ Saved to server! Files in the server folder have been physically renamed in your custom order.');
-        exitEditMode();
-      } else {
-        alert('Server reorder failed: ' + (result.error || result.data?.error));
-      }
-    } else {
-      // In-browser memory reordering
-      state.currentRead.pages = state.stagedPages.map((p, idx) => ({ ...p, index: idx + 1 }));
-      state.hasUnsavedChanges = false;
-      alert('✅ Page sequence updated in memory!');
-      exitEditMode();
+    // If connected to GitHub, update manifest on repo
+    if (state.ghConnected && state.currentRead.isGitHub) {
+      await updateManifestOnGitHub(state.currentRead.id, state.currentRead.pages.map(p => p.filename));
     }
+
+    exitEditMode();
   }
 
-  async function deletePage(index) {
-    const page = state.stagedPages[index];
-    if (!page) return;
-
-    const confirmDel = confirm(`Delete page "${page.filename}"?`);
-    if (!confirmDel) return;
-
-    if (state.serverMode) {
-      showLoading(true, 'DELETING PAGE FROM SERVER...', 50, 'Removing file from server disk...');
-      const result = await safeFetchJson(`/api/reads/${encodeURIComponent(state.currentRead.id)}/delete-page`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filename: page.filename })
-      });
-      showLoading(false);
-
-      if (result.ok && result.data.success) {
-        state.currentRead = result.data.read;
-        state.stagedPages = JSON.parse(JSON.stringify(result.data.read.pages));
-        state.hasUnsavedChanges = false;
-        renderEditCards();
-        updateEditBarStatus();
-      } else {
-        alert('Error deleting page: ' + (result.error || result.data?.error));
-      }
-    } else {
-      state.stagedPages.splice(index, 1);
-      state.hasUnsavedChanges = true;
-      renderEditCards();
-      updateEditBarStatus();
-    }
-  }
-
-  async function deleteCurrentRead() {
-    if (!state.currentRead) return;
-    const confirmDel = confirm(`Permanently delete read "${state.currentRead.title}"?`);
-    if (!confirmDel) return;
-
-    if (state.serverMode) {
-      await safeFetchJson(`/api/reads/${encodeURIComponent(state.currentRead.id)}`, { method: 'DELETE' });
-      await refreshServerReads();
-    } else {
-      state.reads.splice(state.activeReadIndex, 1);
-      if (state.reads.length > 0) switchRead(0);
-      else showEmptyState();
-      updateShelfUI();
-    }
-  }
-
-  // --- MULTI-USER SYNC POLLING ---
-  function startSyncPolling() {
-    if (!state.serverMode) return;
-    state.syncTimer = setInterval(async () => {
-      if (state.isEditing) return;
-
-      const check = await safeFetchJson('/api/reads');
-      if (check.ok && check.data.success) {
-        state.reads = check.data.reads;
-        updateHudUI();
-
-        if (state.currentRead) {
-          const activeServerSummary = check.data.reads.find(r => r.id === state.currentRead.id);
-          if (activeServerSummary && activeServerSummary.updatedAt > state.lastKnownUpdate) {
-            console.log('[SYNC] Server folder changed. Reloading pages...');
-            el.serverSyncStatus.textContent = '⚡ SYNCING...';
-            await loadRead(state.activeReadIndex);
-            setTimeout(() => {
-              el.serverSyncStatus.textContent = '● SERVER DISK ACTIVE';
-            }, 1000);
-          }
-        }
-      }
-    }, 4000);
-  }
-
-  // --- DEMO READS GENERATOR ---
-  async function createDemoReads() {
-    showLoading(true, 'CREATING DEMO READS...', 20, 'Synthesizing schematics and manga strips...');
-
-    try {
-      if (typeof JSZip === 'undefined') {
-        alert('JSZip library is not loaded.');
-        showLoading(false);
-        return;
-      }
-
-      const zip1 = new JSZip();
-      const zip2 = new JSZip();
-
-      for (let i = 1; i <= 6; i++) {
-        const c1 = document.createElement('canvas'); c1.width = 1200; c1.height = 1600;
-        renderSchematicPage(c1.getContext('2d'), i, 6);
-        const b1 = await new Promise(r => c1.toBlob(r, 'image/webp', 0.9));
-        zip1.file(`0${i}_cyber_blueprint.webp`, b1);
-
-        const c2 = document.createElement('canvas'); c2.width = 1200; c2.height = 1700;
-        renderMangaPage(c2.getContext('2d'), i, 6);
-        const b2 = await new Promise(r => c2.toBlob(r, 'image/jpeg', 0.9));
-        zip2.file(`0${i}_orbital_episode.jpg`, b2);
-      }
-
-      const blob1 = await zip1.generateAsync({ type: 'blob' });
-      const blob2 = await zip2.generateAsync({ type: 'blob' });
-
-      const file1 = new File([blob1], 'DEMO_01_CYBER_BLUEPRINT.zip', { type: 'application/zip' });
-      const file2 = new File([blob2], 'DEMO_02_ORBITAL_MANGA.zip', { type: 'application/zip' });
-
-      await handleFilesSelected([file1, file2]);
-    } catch (err) {
-      console.error('Demo creation error:', err);
-      alert('Error creating demo: ' + err.message);
-      showLoading(false);
-    }
-  }
-
-  function renderSchematicPage(ctx, pageNum, total) {
-    ctx.fillStyle = '#080d1a'; ctx.fillRect(0, 0, 1200, 1600);
-    ctx.strokeStyle = '#14213d'; ctx.lineWidth = 1;
-    for (let x = 0; x < 1200; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 1600); ctx.stroke(); }
-    ctx.strokeStyle = '#06b6d4'; ctx.lineWidth = 6;
-    ctx.beginPath(); ctx.moveTo(600, 0); ctx.lineTo(600, 1600); ctx.stroke();
-    ctx.fillStyle = '#0f172a'; ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2;
-    ctx.fillRect(150, 200, 900, 320); ctx.strokeRect(150, 200, 900, 320);
-    ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 36px monospace';
-    ctx.fillText(`SECTOR 0${pageNum} // SCHEMATIC RELAY`, 200, 270);
-    ctx.fillStyle = '#94a3b8'; ctx.font = '22px monospace';
-    ctx.fillText(`DUAL-MODE ENGINE: ZERO DEPENDENCIES REQUIRED`, 200, 330);
-    ctx.fillText(`PAGE ${pageNum} OF ${total}`, 200, 390);
-    ctx.fillStyle = '#10b981'; ctx.fillText(`STATUS: NOMINAL (CONNECTED ACROSS STRIP)`, 200, 450);
-  }
-
-  function renderMangaPage(ctx, pageNum, total) {
-    ctx.fillStyle = '#0f0f14'; ctx.fillRect(0, 0, 1200, 1700);
-    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 5;
-    ctx.fillStyle = '#171722'; ctx.fillRect(80, 80, 1040, 480); ctx.strokeRect(80, 80, 1040, 480);
-    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 42px sans-serif';
-    ctx.fillText(`ORBITAL PROTOCOL // EPISODE 02`, 140, 170);
-    ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 28px monospace';
-    ctx.fillText(`PAGE ${pageNum} OF ${total} — STRIP VIEWER`, 140, 230);
-  }
-
-  // --- TELEMETRY & HUD UPDATES ---
-  function updateTelemetryCurrentPage(pageNum) {
-    if (!state.currentRead) return;
-    el.telemPage.textContent = String(pageNum).padStart(2, '0');
-    el.telemTotal.textContent = String(state.currentRead.pages.length).padStart(2, '0');
-    el.radarCurrentPage.textContent = pageNum;
-    el.radarTotalPages.textContent = state.currentRead.pages.length;
-    const progress = (pageNum - 1) / Math.max(1, state.currentRead.pages.length - 1);
-    el.radarScrubThumb.style.top = `${progress * 76}px`;
-  }
-
-  function setupScrollMonitoring() {
-    let ticking = false;
-    window.addEventListener('scroll', () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const scrollTop = window.scrollY;
-          const maxScroll = document.body.scrollHeight - window.innerHeight;
-          const pct = maxScroll > 0 ? Math.min(100, Math.round((scrollTop / maxScroll) * 100)) : 0;
-          el.telemPercent.textContent = `${pct}%`;
-          ticking = false;
-        });
-        ticking = true;
-      }
-    });
-  }
-
-  function handleScrubTrackClick(e) {
-    if (!state.currentRead) return;
-    const rect = el.radarScrubTrack.getBoundingClientRect();
-    const clickY = e.clientY - rect.top;
-    const ratio = Math.max(0, Math.min(1, clickY / rect.height));
-    const targetPage = Math.max(1, Math.round(ratio * state.currentRead.pages.length));
-    jumpToPage(targetPage);
-  }
-
-  function jumpToPage(pageNum) {
-    if (state.readingMode === 'long-strip') {
-      const targetEl = document.getElementById(`page-frame-${pageNum}`);
-      if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } else {
-      state.pagedIndex = Math.max(0, pageNum - 1);
-      renderPagedMode(state.currentRead);
-    }
-  }
-
-  function updateHudUI() {
-    const totalReads = state.reads.length;
-    el.readsCount.textContent = totalReads;
-    if (totalReads > 0 && state.activeReadIndex >= 0 && state.reads[state.activeReadIndex]) {
-      const read = state.reads[state.activeReadIndex];
-      el.currentReadBadge.textContent = `READ ${state.activeReadIndex + 1}/${totalReads}`;
-      el.currentReadTitle.textContent = read.title || read.folderName;
-      el.currentReadPages.textContent = `${read.pageCount || read.pages?.length || 0} P`;
-      el.btnPrevRead.disabled = state.activeReadIndex === 0;
-      el.btnNextRead.disabled = state.activeReadIndex === totalReads - 1;
-      el.btnPrevRead.style.opacity = state.activeReadIndex === 0 ? '0.4' : '1';
-      el.btnNextRead.style.opacity = state.activeReadIndex === totalReads - 1 ? '0.4' : '1';
-    }
-  }
-
-  function toggleReadsDrawer() {
-    if (el.readsDrawer.classList.contains('hidden')) {
-      updateShelfUI();
-      el.readsDrawer.classList.remove('hidden');
-    } else {
-      closeReadsDrawer();
-    }
-  }
-
-  function closeReadsDrawer() { el.readsDrawer.classList.add('hidden'); }
-
-  function updateShelfUI() {
-    el.shelfCount.textContent = state.reads.length;
-    el.shelfSummary.textContent = state.serverMode
-      ? `${state.reads.length} server folders in /data/reads/`
-      : `${state.reads.length} in-browser reads in memory`;
-    el.shelfGrid.innerHTML = '';
+  // --- LIBRARY MODAL ---
+  function updateLibraryUI() {
+    el.libraryCount.textContent = state.reads.length;
+    el.libraryGrid.innerHTML = '';
 
     state.reads.forEach((read, idx) => {
       const card = document.createElement('div');
-      card.className = `shelf-card ${idx === state.activeReadIndex ? 'active-read' : ''}`;
+      card.className = `library-card ${idx === state.activeReadIndex ? 'active-read' : ''}`;
 
-      const thumb = document.createElement('img');
-      thumb.className = 'shelf-thumb';
-      thumb.src = read.firstPageUrl || (read.pages && read.pages[0]?.url) || '';
-      thumb.alt = read.title || read.folderName;
-
-      const info = document.createElement('div');
-      info.className = 'shelf-info';
-      const pagesCount = read.pageCount || (read.pages ? read.pages.length : 0);
-      info.innerHTML = `
-        <div class="shelf-title">${read.title || read.folderName}</div>
-        <div class="shelf-meta">${pagesCount} Pages • ${(read.totalSize / (1024 * 1024)).toFixed(2)} MB</div>
+      card.innerHTML = `
+        <img class="library-thumb" src="${read.pages[0]?.url || ''}" alt="">
+        <div class="library-info">
+          <div class="library-title">${read.title}</div>
+          <div class="library-sub">${read.pages.length} Pages ${read.isGitHub ? '• Saved on GitHub' : '• Local'}</div>
+        </div>
       `;
-
-      card.appendChild(thumb);
-      card.appendChild(info);
 
       card.addEventListener('click', () => {
         loadRead(idx);
-        closeReadsDrawer();
+        closeModal(el.modalLibrary);
       });
 
-      el.shelfGrid.appendChild(card);
+      el.libraryGrid.appendChild(card);
     });
   }
 
-  function updateFiltersStyle() {
-    el.stripContainer.style.setProperty('--filter-brightness', `${state.brightness}%`);
-    el.stripContainer.style.setProperty('--filter-contrast', `${state.contrast}%`);
-    el.stripContainer.style.setProperty('--filter-invert', state.invert ? '100%' : '0%');
-    el.stripContainer.style.setProperty('--filter-grayscale', state.grayscale ? '100%' : '0%');
-    el.stripContainer.className = `strip-container gap-${state.gap}`;
+  // --- SAMPLE READ GENERATOR ---
+  async function loadSampleRead() {
+    showLoading(true, 'Generating sample comic strip...', 30, 'Drawing panels');
+
+    const zip = new JSZip();
+    for (let i = 1; i <= 5; i++) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1200;
+      canvas.height = 1600;
+      const ctx = canvas.getContext('2d');
+
+      // Minimalist black-and-white comic style
+      ctx.fillStyle = '#111';
+      ctx.fillRect(0, 0, 1200, 1600);
+
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(80, 80, 1040, 680);
+      ctx.strokeRect(80, 840, 1040, 680);
+
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 36px sans-serif';
+      ctx.fillText(`SAMPLE STRIP — PAGE ${i}`, 140, 160);
+
+      ctx.fillStyle = '#888';
+      ctx.font = '22px sans-serif';
+      ctx.fillText(`Seamless zero-gap long strip reading demonstration.`, 140, 220);
+      ctx.fillText(`Continuous page flow without borders or visual breaks.`, 140, 260);
+
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.88));
+      zip.file(`page_0${i}.jpg`, blob);
+    }
+
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const file = new File([blob], 'Sample_Strip.zip', { type: 'application/zip' });
+    await unpackZipArchive(file);
   }
 
-  function resetFilters() {
-    state.gap = 0; state.brightness = 100; state.contrast = 100; state.invert = false; state.grayscale = false;
-    el.rangeGap.value = 0; el.valGap.textContent = '0px (Seamless Strip)';
-    el.rangeBrightness.value = 100; el.valBrightness.textContent = '100%';
-    el.rangeContrast.value = 100; el.valContrast.textContent = '100%';
-    el.checkInvert.checked = false; el.checkGrayscale.checked = false;
-    updateFiltersStyle();
-  }
-
-  function openSpecsModal() {
-    const currentRead = state.currentRead;
-    if (!currentRead) return;
-
-    el.specsModalTitle.textContent = `READ: ${currentRead.title}`;
-    el.specFolderName.textContent = state.serverMode ? `/data/reads/${currentRead.folderName}` : 'In-Browser RAM';
-    el.specPayloadSize.textContent = `${(currentRead.totalSize / (1024 * 1024)).toFixed(2)} MB (${currentRead.totalSize.toLocaleString()} bytes)`;
-    el.specImageCount.textContent = `${currentRead.pages.length} PAGES`;
-    el.specLastUpdate.textContent = new Date(currentRead.updatedAt || Date.now()).toLocaleString();
-
-    el.specsManifestTbody.innerHTML = '';
-    currentRead.pages.forEach((p, idx) => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>#${String(idx + 1).padStart(2, '0')}</td>
-        <td style="font-family: monospace;">${p.filename}</td>
-        <td><span class="spec-tag">${(p.ext || 'IMG').toUpperCase()}</span></td>
-        <td>${(p.size / 1024).toFixed(1)} KB</td>
-        <td><a href="${p.url}" target="_blank" class="table-btn-dl">VIEW ORIGINAL</a></td>
-      `;
-      el.specsManifestTbody.appendChild(tr);
+  // --- EVENT LISTENERS ---
+  function setupEventListeners() {
+    el.btnPickFiles.addEventListener('click', () => el.masterFileInput.click());
+    el.btnUploadMore.addEventListener('click', () => el.masterFileInput.click());
+    el.masterFileInput.addEventListener('change', (e) => {
+      handleFilesSelected(e.target.files);
+      el.masterFileInput.value = '';
     });
 
-    openModal(el.modalSpecs);
+    el.btnSampleRead.addEventListener('click', loadSampleRead);
+
+    // Read navigation
+    el.btnPrevRead.addEventListener('click', () => loadRead(state.activeReadIndex - 1));
+    el.btnNextRead.addEventListener('click', () => loadRead(state.activeReadIndex + 1));
+    el.btnFooterPrev.addEventListener('click', () => loadRead(state.activeReadIndex - 1));
+    el.btnFooterNext.addEventListener('click', () => loadRead(state.activeReadIndex + 1));
+    el.btnFooterTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+    // Library
+    el.btnOpenShelf.addEventListener('click', () => openModal(el.modalLibrary));
+    el.btnLibrarySync.addEventListener('click', syncReadsFromGitHub);
+
+    // Settings
+    el.btnGithubStatus.addEventListener('click', () => openModal(el.modalSettings));
+    el.btnOpenSettings.addEventListener('click', () => openModal(el.modalSettings));
+    el.btnSetupGithubQuick.addEventListener('click', () => openModal(el.modalSettings));
+
+    el.btnSaveGithub.addEventListener('click', () => {
+      state.ghConfig.repo = el.inputGhRepo.value.trim();
+      state.ghConfig.token = el.inputGhToken.value.trim();
+      state.ghConfig.branch = el.inputGhBranch.value.trim() || 'main';
+      state.ghConfig.path = el.inputGhPath.value.trim() || 'reads';
+      closeModal(el.modalSettings);
+      connectGitHub();
+    });
+
+    el.btnDisconnectGithub.addEventListener('click', () => {
+      localStorage.removeItem('sr_gh_repo');
+      localStorage.removeItem('sr_gh_token');
+      state.ghConfig.repo = '';
+      state.ghConfig.token = '';
+      state.ghConnected = false;
+      updateGitHubStatusUI(false);
+      closeModal(el.modalSettings);
+    });
+
+    // Strip width
+    el.selectWidth.addEventListener('change', (e) => {
+      state.stripWidth = e.target.value;
+      el.stripOuter.className = `strip-outer width-${state.stripWidth}`;
+    });
+
+    // Edit Order
+    el.btnEditOrder.addEventListener('click', toggleEditMode);
+    el.btnSaveOrder.addEventListener('click', saveOrder);
+    el.btnResetOrder.addEventListener('click', () => {
+      state.stagedPages = JSON.parse(JSON.stringify(state.currentRead.pages));
+      state.hasUnsavedChanges = false;
+      renderEditCards();
+    });
+    el.btnExitEdit.addEventListener('click', exitEditMode);
+
+    // Modal close buttons
+    document.querySelectorAll('[data-close]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const modal = document.getElementById(btn.dataset.close);
+        if (modal) closeModal(modal);
+      });
+    });
+
+    // Global keys
+    window.addEventListener('keydown', (e) => {
+      if (['INPUT', 'SELECT'].includes(e.target.tagName)) return;
+      if (e.key === '[') loadRead(state.activeReadIndex - 1);
+      if (e.key === ']') loadRead(state.activeReadIndex + 1);
+      if (e.key === 'Escape') {
+        closeModal(el.modalSettings);
+        closeModal(el.modalLibrary);
+        if (state.isEditing) exitEditMode();
+      }
+    });
   }
 
-  function openModal(modalEl) { modalEl.classList.remove('hidden'); }
-  function closeModal(modalEl) { modalEl.classList.add('hidden'); }
+  // --- DROP ZONE ---
+  function setupDropZone() {
+    const zone = el.dropZone;
+    const card = zone.querySelector('.drop-card');
 
-  function showLoading(show, title = '', percent = 0, meta = '') {
+    ['dragenter', 'dragover'].forEach(name => {
+      window.addEventListener(name, (e) => {
+        e.preventDefault();
+        card.classList.add('drag-over');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(name => {
+      window.addEventListener(name, (e) => {
+        e.preventDefault();
+        card.classList.remove('drag-over');
+      });
+    });
+
+    window.addEventListener('drop', (e) => {
+      const files = e.dataTransfer.files;
+      if (files && files.length > 0) handleFilesSelected(files);
+    });
+  }
+
+  function openModal(modal) { modal.classList.remove('hidden'); }
+  function closeModal(modal) { modal.classList.add('hidden'); }
+
+  function showLoading(show, title = '', percent = 0, sub = '') {
     if (show) {
-      el.loadingTitle.textContent = title;
-      el.loadingProgressFill.style.width = `${percent}%`;
-      el.loadingMeta.textContent = meta;
+      el.loadingText.textContent = title;
+      el.progressBar.style.width = `${percent}%`;
+      el.loadingSub.textContent = sub;
       el.loadingOverlay.classList.remove('hidden');
     } else {
       el.loadingOverlay.classList.add('hidden');
     }
   }
 
-  function updateLoading(title, percent, meta) {
-    el.loadingTitle.textContent = title;
-    el.loadingProgressFill.style.width = `${percent}%`;
-    el.loadingMeta.textContent = meta;
-  }
-
-  function toggleFullscreen() {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
-    } else {
-      if (document.exitFullscreen) document.exitFullscreen();
-    }
-  }
-
-  function handleGlobalKeydown(e) {
-    if (['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
-    switch (e.key) {
-      case '[': e.preventDefault(); switchRead(state.activeReadIndex - 1); break;
-      case ']': e.preventDefault(); switchRead(state.activeReadIndex + 1); break;
-      case 'e': case 'E': e.preventDefault(); toggleEditMode(); break;
-      case 'f': case 'F': e.preventDefault(); toggleFullscreen(); break;
-      case 'l': case 'L': e.preventDefault(); toggleReadsDrawer(); break;
-      case 'h': case 'H': e.preventDefault(); state.hudVisible = !state.hudVisible; el.topHud.classList.toggle('hud-collapsed', !state.hudVisible); break;
-      case 'Escape': closeModal(el.modalFilters); closeModal(el.modalSpecs); closeReadsDrawer(); if (state.isEditing) exitEditMode(); break;
-    }
+  function updateLoading(title, percent, sub) {
+    el.loadingText.textContent = title;
+    el.progressBar.style.width = `${percent}%`;
+    el.loadingSub.textContent = sub;
   }
 
   if (document.readyState === 'loading') {
