@@ -82,6 +82,7 @@
     btnFooterPrev: document.getElementById('btn-footer-prev'),
     btnFooterTop: document.getElementById('btn-footer-top'),
     btnFooterNext: document.getElementById('btn-footer-next'),
+    btnFooterDelete: document.getElementById('btn-footer-delete'),
 
     modalSettings: document.getElementById('modal-settings'),
     inputGhRepo: document.getElementById('input-gh-repo'),
@@ -617,11 +618,20 @@
         <div class="edit-card-actions">
           <button class="btn btn-small btn-up" ${idx === 0 ? 'disabled' : ''}>▲</button>
           <button class="btn btn-small btn-down" ${idx === state.stagedPages.length - 1 ? 'disabled' : ''}>▼</button>
+          <button class="btn-del-page" title="Delete page">🗑️</button>
         </div>
       `;
 
       card.querySelector('.btn-up').addEventListener('click', () => movePage(idx, -1));
       card.querySelector('.btn-down').addEventListener('click', () => movePage(idx, 1));
+      card.querySelector('.btn-del-page').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (confirm(`Delete page "${page.filename}"?`)) {
+          state.stagedPages.splice(idx, 1);
+          state.hasUnsavedChanges = true;
+          renderEditCards();
+        }
+      });
 
       card.addEventListener('dragstart', handleDragStart);
       card.addEventListener('dragover', handleDragOver);
@@ -699,15 +709,115 @@
           <div class="library-title">${read.title}</div>
           <div class="library-sub">${read.pages.length} Pages ${read.isGitHub ? '• Saved on GitHub' : '• Local'}</div>
         </div>
+        <div class="library-actions">
+          <button class="library-btn btn-rename" title="Rename read">Rename</button>
+          <button class="library-btn library-btn-danger btn-delete" title="Delete read">Delete</button>
+        </div>
       `;
 
-      card.addEventListener('click', () => {
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.library-actions')) return;
         loadRead(idx);
         closeModal(el.modalLibrary);
       });
 
+      card.querySelector('.btn-rename').addEventListener('click', (e) => {
+        e.stopPropagation();
+        renameRead(idx);
+      });
+
+      card.querySelector('.btn-delete').addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteRead(idx);
+      });
+
       el.libraryGrid.appendChild(card);
     });
+  }
+
+  async function deleteRead(idx) {
+    if (idx < 0 || idx >= state.reads.length) return;
+    const read = state.reads[idx];
+    if (!read) return;
+
+    const confirmMsg = read.isGitHub
+      ? `Permanently delete "${read.title}" and all its pages from your GitHub repository?`
+      : `Delete "${read.title}" from your library?`;
+
+    if (!confirm(confirmMsg)) return;
+
+    if (read.isGitHub && state.ghConnected) {
+      showLoading(true, `Deleting "${read.title}" from GitHub...`, 20, 'Removing repository files');
+      try {
+        const cleanPath = (state.ghConfig.path || 'reads').replace(/^\/|\/$/g, '');
+        const folderPath = `${cleanPath}/${read.id}`;
+
+        const files = await ghRequest(`/repos/${state.ghConfig.repo}/contents/${folderPath}?ref=${state.ghConfig.branch}`).catch(() => []);
+
+        for (let i = 0; i < files.length; i++) {
+          const f = files[i];
+          const pct = Math.round(((i + 1) / files.length) * 90);
+          updateLoading(`Deleting ${f.name}...`, pct, `${i + 1} / ${files.length}`);
+          await ghRequest(`/repos/${state.ghConfig.repo}/contents/${f.path}`, {
+            method: 'DELETE',
+            body: JSON.stringify({
+              message: `Delete ${read.title} - ${f.name}`,
+              sha: f.sha,
+              branch: state.ghConfig.branch
+            })
+          });
+        }
+      } catch (err) {
+        showLoading(false);
+        alert(`Error deleting from GitHub: ${err.message}`);
+        return;
+      }
+      showLoading(false);
+    } else {
+      if (read.pages) {
+        read.pages.forEach(p => {
+          if (p.url && p.url.startsWith('blob:')) URL.revokeObjectURL(p.url);
+        });
+      }
+    }
+
+    state.reads.splice(idx, 1);
+
+    if (state.activeReadIndex === idx) {
+      if (state.reads.length > 0) {
+        loadRead(Math.max(0, idx - 1));
+      } else {
+        state.activeReadIndex = -1;
+        state.currentRead = null;
+        showEmptyState();
+      }
+    } else if (state.activeReadIndex > idx) {
+      state.activeReadIndex--;
+    }
+
+    updateLibraryUI();
+    updateNavUI();
+  }
+
+  async function renameRead(idx) {
+    if (idx < 0 || idx >= state.reads.length) return;
+    const read = state.reads[idx];
+    if (!read) return;
+
+    const newTitle = prompt('Enter new title for this read:', read.title);
+    if (!newTitle || newTitle.trim() === '' || newTitle.trim() === read.title) return;
+
+    read.title = newTitle.trim();
+
+    if (read.isGitHub && state.ghConnected) {
+      await updateManifestOnGitHub(read.id, read.pages.map(p => p.filename));
+    }
+
+    if (state.activeReadIndex === idx) {
+      el.activeReadTitle.textContent = read.title;
+    }
+
+    updateLibraryUI();
   }
 
   // --- SAMPLE READ GENERATOR ---
@@ -765,6 +875,9 @@
     el.btnFooterPrev.addEventListener('click', () => loadRead(state.activeReadIndex - 1));
     el.btnFooterNext.addEventListener('click', () => loadRead(state.activeReadIndex + 1));
     el.btnFooterTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    if (el.btnFooterDelete) {
+      el.btnFooterDelete.addEventListener('click', () => deleteRead(state.activeReadIndex));
+    }
 
     // Library
     el.btnOpenShelf.addEventListener('click', () => openModal(el.modalLibrary));

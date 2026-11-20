@@ -647,14 +647,50 @@ body {
 .library-title { font-size: 0.85rem; font-weight: 600; }
 .library-sub { font-size: 0.72rem; color: var(--text-muted); margin-top: 0.15rem; }
 
-.library-btn-del {
-  background: transparent;
-  border: none;
-  color: var(--text-dim);
-  cursor: pointer;
-  padding: 4px 8px;
+.library-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
-.library-btn-del:hover { color: var(--danger); }
+
+.library-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  padding: 4px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.library-btn:hover {
+  background: var(--elevated);
+  border-color: var(--border-focus);
+  color: var(--text);
+}
+
+.library-btn-danger {
+  color: var(--danger);
+  border-color: rgba(207, 102, 121, 0.3);
+}
+.library-btn-danger:hover {
+  background: rgba(207, 102, 121, 0.15);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.btn-del-page {
+  background: transparent;
+  border: 1px solid rgba(207, 102, 121, 0.25);
+  color: var(--danger);
+  font-size: 0.75rem;
+  padding: 3px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.btn-del-page:hover {
+  background: rgba(207, 102, 121, 0.15);
+}
 
 @media (max-width: 600px) {
   .top-bar { padding: 0 0.75rem; }
