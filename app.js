@@ -40,8 +40,65 @@
     pageObserver: null
   };
 
-  const IMAGE_EXTS = new Set(['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif', 'bmp', 'svg']);
+  const IMAGE_EXTS = new Set([
+    'jpg', 'jpeg', 'jfif', 'jpe', 'jif',
+    'png', 'webp', 'gif', 'avif', 'bmp',
+    'svg', 'tiff', 'tif', 'jxl'
+  ]);
   const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+
+  function getMimeType(filename) {
+    const ext = (filename || '').split('.').pop().toLowerCase();
+    switch (ext) {
+      case 'jpg':
+      case 'jpeg':
+      case 'jfif':
+      case 'jpe':
+      case 'jif':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+      case 'webp':
+        return 'image/webp';
+      case 'gif':
+        return 'image/gif';
+      case 'avif':
+        return 'image/avif';
+      case 'bmp':
+        return 'image/bmp';
+      case 'svg':
+        return 'image/svg+xml';
+      case 'tiff':
+      case 'tif':
+        return 'image/tiff';
+      case 'jxl':
+        return 'image/jxl';
+      default:
+        return 'image/jpeg';
+    }
+  }
+
+  function getErrorMessage(err) {
+    if (!err) return 'Unknown error';
+    if (typeof err === 'string') return err;
+    if (err.message && typeof err.message === 'string' && err.message !== 'undefined') return err.message;
+    if (err.error && typeof err.error === 'string') return err.error;
+    if (err.statusText) return `HTTP ${err.status}: ${err.statusText}`;
+    if (err.target && err.target.error) return getErrorMessage(err.target.error);
+    try {
+      const str = JSON.stringify(err);
+      if (str && str !== '{}') return str;
+    } catch (e) {}
+    return String(err) || 'An unexpected error occurred';
+  }
+
+  function ghPath(...segments) {
+    return segments
+      .map(s => String(s || '').replace(/^\/+|\/+$/g, ''))
+      .filter(Boolean)
+      .map(s => encodeURIComponent(s))
+      .join('/');
+  }
 
   // DOM Elements
   const el = {
@@ -243,7 +300,7 @@
         const res = await fetch(`https://api.github.com${endpoint}`, { ...options, headers });
         if (res.status === 403 || res.status === 429) {
           const errData = await res.json().catch(() => ({}));
-          const errMsg = errData.message || '';
+          const errMsg = errData.message || (errData.errors && errData.errors[0]?.message) || '';
           const isRateLimit = /rate limit|secondary/i.test(errMsg) || res.status === 429;
 
           if (isRateLimit && attempt < retries) {
@@ -259,19 +316,22 @@
         }
 
         if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.message || `GitHub API error: HTTP ${res.status}`);
+          const errData = await res.json().catch(() => ({}));
+          const subMsg = errData.errors && errData.errors[0]?.message;
+          const detail = subMsg ? `${errData.message}: ${subMsg}` : errData.message;
+          throw new Error(detail || `GitHub API error: HTTP ${res.status}`);
         }
         return await res.json();
       } catch (err) {
         lastError = err;
-        if (attempt >= retries || !/rate limit|secondary|fetch|network/i.test(err.message)) {
-          throw err;
+        const msg = getErrorMessage(err);
+        if (attempt >= retries || !/rate limit|secondary|fetch|network/i.test(msg)) {
+          throw (err instanceof Error ? err : new Error(msg));
         }
         await sleep(1500 * (attempt + 1));
       }
     }
-    throw lastError;
+    throw (lastError instanceof Error ? lastError : new Error(getErrorMessage(lastError)));
   }
 
   async function connectGitHub() {
@@ -292,7 +352,7 @@
       showLoading(false);
       state.ghConnected = false;
       updateGitHubStatusUI(false);
-      alert('Could not connect to GitHub repository: ' + err.message);
+      alert('Could not connect to GitHub repository: ' + getErrorMessage(err));
     }
   }
 
@@ -419,36 +479,48 @@
     if (!state.ghConnected) return;
 
     const cleanPath = (state.ghConfig.path || 'reads').replace(/^\/|\/$/g, '');
-    const folderPath = `${cleanPath}/${read.id}`;
-
     showLoading(true, 'Saving read to your GitHub repository...', 0, 'Committing pages...');
 
+    let failedPages = 0;
     for (let i = 0; i < read.pages.length; i++) {
       const page = read.pages[i];
       const pct = Math.round(((i + 1) / read.pages.length) * 85);
       updateLoading(`Saving page ${i + 1} of ${read.pages.length} to GitHub...`, pct, page.filename);
 
       if (!page.sha && page.blob) {
-        const base64 = await blobToBase64(page.blob);
+        // Skip files that exceed GitHub REST API 25MB body limit
+        if (page.blob.size > 25 * 1024 * 1024) {
+          console.warn(`Skipping cloud upload for ${page.filename}: exceeds 25MB GitHub limit`);
+          failedPages++;
+          continue;
+        }
 
-        let existingSha = null;
         try {
-          const exFile = await ghRequest(`/repos/${state.ghConfig.repo}/contents/${folderPath}/${page.filename}?ref=${state.ghConfig.branch}`);
-          existingSha = exFile.sha;
-        } catch (e) {}
+          const base64 = await blobToBase64(page.blob);
+          const fileEndpoint = `/repos/${state.ghConfig.repo}/contents/${ghPath(cleanPath, read.id, page.filename)}`;
 
-        const putBody = {
-          message: `Add ${read.title} - ${page.filename}`,
-          content: base64,
-          branch: state.ghConfig.branch
-        };
-        if (existingSha) putBody.sha = existingSha;
+          let existingSha = null;
+          try {
+            const exFile = await ghRequest(`${fileEndpoint}?ref=${state.ghConfig.branch}`);
+            existingSha = exFile.sha;
+          } catch (e) {}
 
-        const res = await ghRequest(`/repos/${state.ghConfig.repo}/contents/${folderPath}/${page.filename}`, {
-          method: 'PUT',
-          body: JSON.stringify(putBody)
-        });
-        page.sha = res.content?.sha || null;
+          const putBody = {
+            message: `Add ${read.title} - ${page.filename}`,
+            content: base64,
+            branch: state.ghConfig.branch
+          };
+          if (existingSha) putBody.sha = existingSha;
+
+          const res = await ghRequest(fileEndpoint, {
+            method: 'PUT',
+            body: JSON.stringify(putBody)
+          });
+          page.sha = res.content?.sha || null;
+        } catch (pageErr) {
+          console.warn(`Could not save page ${page.filename} to GitHub:`, pageErr);
+          failedPages++;
+        }
       }
 
       // Pacing delay to avoid secondary rate limits
@@ -464,9 +536,11 @@
 
     updateLoading('Saving manifest to GitHub...', 95, 'manifest.json');
     const manifestBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(manifest, null, 2))));
+    const manifestEndpoint = `/repos/${state.ghConfig.repo}/contents/${ghPath(cleanPath, read.id, 'manifest.json')}`;
+
     let manifestSha = null;
     try {
-      const ex = await ghRequest(`/repos/${state.ghConfig.repo}/contents/${folderPath}/manifest.json?ref=${state.ghConfig.branch}`);
+      const ex = await ghRequest(`${manifestEndpoint}?ref=${state.ghConfig.branch}`);
       manifestSha = ex.sha;
     } catch (e) {}
 
@@ -477,13 +551,21 @@
     };
     if (manifestSha) manifestBody.sha = manifestSha;
 
-    await ghRequest(`/repos/${state.ghConfig.repo}/contents/${folderPath}/manifest.json`, {
-      method: 'PUT',
-      body: JSON.stringify(manifestBody)
-    });
+    try {
+      await ghRequest(manifestEndpoint, {
+        method: 'PUT',
+        body: JSON.stringify(manifestBody)
+      });
+    } catch (mErr) {
+      console.warn('Could not save manifest.json to GitHub:', mErr);
+    }
 
     read.isGitHub = true;
     showLoading(false);
+
+    if (failedPages > 0) {
+      alert(`Read saved to GitHub: ${read.pages.length - failedPages} of ${read.pages.length} pages synced successfully (${failedPages} pages skipped or delayed).`);
+    }
 
     // Update library order on GitHub
     await saveLibraryOrder();
@@ -547,35 +629,39 @@
     if (!state.ghConnected) return;
 
     showLoading(true, 'Updating page order in GitHub repository...', 50, 'Saving manifest.json');
-    const cleanPath = (state.ghConfig.path || 'reads').replace(/^\/|\/$/g, '');
-    const manifestPath = `${cleanPath}/${readId}/manifest.json`;
-
-    let currentSha = null;
     try {
-      const existing = await ghRequest(`/repos/${state.ghConfig.repo}/contents/${manifestPath}?ref=${state.ghConfig.branch}`);
-      currentSha = existing.sha;
-    } catch (e) {}
+      const cleanPath = (state.ghConfig.path || 'reads').replace(/^\/|\/$/g, '');
+      const manifestEndpoint = `/repos/${state.ghConfig.repo}/contents/${ghPath(cleanPath, readId, 'manifest.json')}`;
 
-    const manifest = {
-      title: state.currentRead.title,
-      updatedAt: Date.now(),
-      pages: orderedFilenames.map((fn, idx) => ({ filename: fn, order: idx + 1 }))
-    };
+      let currentSha = null;
+      try {
+        const existing = await ghRequest(`${manifestEndpoint}?ref=${state.ghConfig.branch}`);
+        currentSha = existing.sha;
+      } catch (e) {}
 
-    const manifestBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(manifest, null, 2))));
-    const body = {
-      message: `Update page order for ${state.currentRead.title}`,
-      content: manifestBase64,
-      branch: state.ghConfig.branch
-    };
-    if (currentSha) body.sha = currentSha;
+      const manifest = {
+        title: state.currentRead ? state.currentRead.title : readId,
+        updatedAt: Date.now(),
+        pages: orderedFilenames.map((fn, idx) => ({ filename: fn, order: idx + 1 }))
+      };
 
-    await ghRequest(`/repos/${state.ghConfig.repo}/contents/${manifestPath}`, {
-      method: 'PUT',
-      body: JSON.stringify(body)
-    });
+      const manifestBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(manifest, null, 2))));
+      const body = {
+        message: `Update page order for ${manifest.title}`,
+        content: manifestBase64,
+        branch: state.ghConfig.branch
+      };
+      if (currentSha) body.sha = currentSha;
 
-    showLoading(false);
+      await ghRequest(manifestEndpoint, {
+        method: 'PUT',
+        body: JSON.stringify(body)
+      });
+    } catch (err) {
+      console.warn('Could not update manifest on GitHub:', err);
+    } finally {
+      showLoading(false);
+    }
   }
 
   // --- FILE HANDLING PIPELINE (ZIP, CBZ, IMAGES) ---
@@ -620,37 +706,53 @@
       const entries = [];
 
       loadedZip.forEach((relPath, entry) => {
-        if (entry.dir || relPath.includes('__MACOSX/') || relPath.startsWith('.')) return;
-        const ext = relPath.split('.').pop().toLowerCase();
-        if (IMAGE_EXTS.has(ext)) entries.push(entry);
+        const cleanPath = relPath.replace(/\\/g, '/');
+        const basename = cleanPath.split('/').pop().trim();
+        if (entry.dir || 
+            cleanPath.includes('__MACOSX') || 
+            basename.startsWith('.') || 
+            basename.startsWith('._') ||
+            basename.toLowerCase() === 'thumbs.db' ||
+            basename.toLowerCase() === 'desktop.ini') {
+          return;
+        }
+        const ext = basename.split('.').pop().toLowerCase();
+        if (IMAGE_EXTS.has(ext)) {
+          entries.push({ entry, basename });
+        }
       });
 
       if (entries.length === 0) {
-        throw new Error('No valid images (JPG, PNG, WEBP) found in archive.');
+        throw new Error('No valid images (JPG, PNG, WEBP, etc.) found in archive.');
       }
 
-      entries.sort((a, b) => collator.compare(a.name, b.name));
+      entries.sort((a, b) => collator.compare(a.basename, b.basename));
 
       const pages = [];
       for (let i = 0; i < entries.length; i++) {
-        const entry = entries[i];
+        const { entry, basename } = entries[i];
         const pct = Math.round(((i + 1) / entries.length) * 70) + 20;
-        const fn = entry.name.split('/').pop();
-        updateLoading(`Extracting page ${i + 1} of ${entries.length}...`, pct, fn);
+        updateLoading(`Extracting page ${i + 1} of ${entries.length}...`, pct, basename);
 
         try {
-          const blob = await entry.async('blob');
-          if (blob && blob.size > 0) {
+          const mime = getMimeType(basename);
+          const buffer = await entry.async('arraybuffer');
+          if (buffer && buffer.byteLength > 10) {
+            const blob = new Blob([buffer], { type: mime });
+            const url = URL.createObjectURL(blob);
             pages.push({
               index: pages.length + 1,
-              filename: fn,
-              url: URL.createObjectURL(blob),
+              filename: basename,
+              url: url,
               blob: blob,
-              size: blob.size
+              size: blob.size,
+              mime: mime
             });
+          } else {
+            console.warn(`Skipping empty or invalid entry: ${basename}`);
           }
         } catch (e) {
-          console.warn(`Skipping unreadable entry ${entry.name}:`, e);
+          console.warn(`Skipping unreadable entry ${basename}:`, e);
         }
 
         // Non-blocking yield so browser UI remains responsive on 50-100+ pages
@@ -683,12 +785,14 @@
           await saveReadToGitHub(newRead);
         } catch (ghErr) {
           console.error('GitHub save error:', ghErr);
-          alert(`"${newRead.title}" loaded into reader successfully! Cloud sync to GitHub encountered an issue: ${ghErr.message}. You can retry or edit from the library.`);
+          const msg = getErrorMessage(ghErr);
+          alert(`"${newRead.title}" loaded into reader successfully! Cloud sync to GitHub encountered an issue: ${msg}. You can retry or edit from the library.`);
         }
       }
     } catch (err) {
       showLoading(false);
-      alert(`Could not extract ${file.name}: ` + err.message);
+      const msg = getErrorMessage(err);
+      alert(`Could not extract ${file.name}: ` + msg);
     }
   }
 
@@ -697,13 +801,17 @@
 
     files.sort((a, b) => collator.compare(a.name, b.name));
 
-    const pages = files.map((file, idx) => ({
-      index: idx + 1,
-      filename: file.name,
-      url: URL.createObjectURL(file),
-      blob: file,
-      size: file.size
-    }));
+    const pages = files.map((file, idx) => {
+      const mime = file.type || getMimeType(file.name);
+      return {
+        index: idx + 1,
+        filename: file.name,
+        url: URL.createObjectURL(file),
+        blob: file,
+        size: file.size,
+        mime: mime
+      };
+    });
 
     const dateStr = new Date().toISOString().slice(0, 10);
     const title = `Image Set ${dateStr}`;
@@ -724,7 +832,13 @@
     showLoading(false);
 
     if (state.ghConnected) {
-      await saveReadToGitHub(newRead);
+      try {
+        await saveReadToGitHub(newRead);
+      } catch (ghErr) {
+        console.error('GitHub save error:', ghErr);
+        const msg = getErrorMessage(ghErr);
+        alert(`"${newRead.title}" loaded into reader successfully! Cloud sync to GitHub encountered an issue: ${msg}. You can retry or edit from the library.`);
+      }
     }
   }
 
@@ -734,12 +848,24 @@
 
   function blobToBase64(blob) {
     return new Promise((resolve, reject) => {
+      if (!blob || !(blob instanceof Blob)) {
+        return reject(new Error('Invalid image blob: file is empty or corrupted'));
+      }
       const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = reader.result.split(',')[1];
-        resolve(base64);
+      reader.onload = () => {
+        if (!reader.result || typeof reader.result !== 'string') {
+          return reject(new Error('FileReader returned empty result'));
+        }
+        const parts = reader.result.split(',');
+        if (parts.length < 2 || !parts[1]) {
+          return reject(new Error('Could not extract base64 data from file'));
+        }
+        resolve(parts[1]);
       };
-      reader.onerror = reject;
+      reader.onerror = () => {
+        const err = reader.error;
+        reject(new Error(err?.message || 'FileReader failed to read image blob'));
+      };
       reader.readAsDataURL(blob);
     });
   }
@@ -794,9 +920,78 @@
       badge.textContent = `#${page.index}`;
 
       const img = document.createElement('img');
-      img.src = page.url;
-      img.alt = page.filename;
+      img.alt = page.filename || `Page #${page.index}`;
       img.loading = 'lazy';
+      if (page.url) {
+        img.src = page.url;
+      }
+
+      img.onerror = async () => {
+        // Authenticated fallback for private GitHub repositories
+        if (state.ghConnected && state.ghConfig.token && read.isGitHub) {
+          try {
+            const cleanPath = (state.ghConfig.path || 'reads').replace(/^\/|\/$/g, '');
+            const rawEndpoint = `/repos/${state.ghConfig.repo}/contents/${ghPath(cleanPath, read.id, page.filename)}`;
+            const res = await fetch(`https://api.github.com${rawEndpoint}`, {
+              headers: {
+                'Accept': 'application/vnd.github.v3.raw',
+                'Authorization': `Bearer ${state.ghConfig.token.trim()}`
+              }
+            });
+            if (res.ok) {
+              const mime = getMimeType(page.filename);
+              const ab = await res.arrayBuffer();
+              const blob = new Blob([ab], { type: mime });
+              const authUrl = URL.createObjectURL(blob);
+              page.url = authUrl;
+              page.blob = blob;
+              img.src = authUrl;
+              return;
+            }
+          } catch (e) {
+            console.warn(`Auth fallback load failed for ${page.filename}:`, e);
+          }
+        }
+
+        // Show fallback notice in the strip
+        pageEl.classList.add('image-render-failed');
+        if (!pageEl.querySelector('.render-error-notice')) {
+          const notice = document.createElement('div');
+          notice.className = 'render-error-notice';
+          notice.innerHTML = `
+            <div class="render-error-content">
+              <span class="render-error-icon">⚠️</span>
+              <div class="render-error-details">
+                <strong>Page #${page.index} could not be rendered</strong>
+                <span class="render-error-fn">${page.filename || 'Unknown image'}</span>
+              </div>
+            </div>
+            <div class="render-error-actions">
+              <button class="btn btn-small btn-retry-render">Retry</button>
+              <button class="btn btn-small btn-replace-render">Replace</button>
+            </div>
+          `;
+          notice.querySelector('.btn-retry-render').addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (page.blob) {
+              img.src = URL.createObjectURL(page.blob);
+            } else if (page.url) {
+              img.src = page.url + (page.url.includes('?') ? '&' : '?') + 't=' + Date.now();
+            }
+          });
+          notice.querySelector('.btn-replace-render').addEventListener('click', (e) => {
+            e.stopPropagation();
+            openReadEditor(state.activeReadIndex);
+          });
+          pageEl.appendChild(notice);
+        }
+      };
+
+      img.onload = () => {
+        pageEl.classList.remove('image-render-failed');
+        const notice = pageEl.querySelector('.render-error-notice');
+        if (notice) notice.remove();
+      };
 
       pageEl.appendChild(badge);
       pageEl.appendChild(img);
@@ -845,7 +1040,7 @@
   function enterEditMode() {
     if (!state.currentRead) return;
     state.isEditing = true;
-    state.stagedPages = JSON.parse(JSON.stringify(state.currentRead.pages));
+    state.stagedPages = state.currentRead.pages.map(p => ({ ...p }));
     state.hasUnsavedChanges = false;
 
     el.btnEditOrder.textContent = '✕ Exit Edit';
@@ -1088,7 +1283,8 @@
           const f = files[i];
           const pct = Math.round(((i + 1) / files.length) * 90);
           updateLoading(`Deleting ${f.name}...`, pct, `${i + 1} / ${files.length}`);
-          await ghRequest(`/repos/${state.ghConfig.repo}/contents/${f.path}`, {
+          const fileEndpoint = `/repos/${state.ghConfig.repo}/contents/${ghPath(...f.path.split('/'))}`;
+          await ghRequest(fileEndpoint, {
             method: 'DELETE',
             body: JSON.stringify({
               message: `Delete ${read.title} - ${f.name}`,
@@ -1099,7 +1295,7 @@
         }
       } catch (err) {
         showLoading(false);
-        alert(`Error deleting from GitHub: ${err.message}`);
+        alert(`Error deleting from GitHub: ${getErrorMessage(err)}`);
         return;
       }
       showLoading(false);
@@ -1509,43 +1705,58 @@
           const entries = [];
 
           loadedZip.forEach((relPath, entry) => {
-            if (entry.dir || relPath.includes('__MACOSX/') || relPath.startsWith('.')) return;
-            const entryExt = relPath.split('.').pop().toLowerCase();
-            if (IMAGE_EXTS.has(entryExt)) entries.push(entry);
+            const cleanPath = relPath.replace(/\\/g, '/');
+            const basename = cleanPath.split('/').pop().trim();
+            if (entry.dir || 
+                cleanPath.includes('__MACOSX') || 
+                basename.startsWith('.') || 
+                basename.startsWith('._') ||
+                basename.toLowerCase() === 'thumbs.db' ||
+                basename.toLowerCase() === 'desktop.ini') {
+              return;
+            }
+            const entryExt = basename.split('.').pop().toLowerCase();
+            if (IMAGE_EXTS.has(entryExt)) {
+              entries.push({ entry, basename });
+            }
           });
 
-          entries.sort((a, b) => collator.compare(a.name, b.name));
+          entries.sort((a, b) => collator.compare(a.basename, b.basename));
 
           for (let i = 0; i < entries.length; i++) {
-            const entry = entries[i];
+            const { entry, basename } = entries[i];
             const pct = Math.round(((i + 1) / entries.length) * 70) + 20;
-            const fn = entry.name.split('/').pop();
-            updateLoading(`Unpacking replacement ${i + 1} of ${entries.length}...`, pct, fn);
+            updateLoading(`Unpacking replacement ${i + 1} of ${entries.length}...`, pct, basename);
 
             try {
-              const blob = await entry.async('blob');
-              if (blob && blob.size > 0) {
+              const mime = getMimeType(basename);
+              const buffer = await entry.async('arraybuffer');
+              if (buffer && buffer.byteLength > 10) {
+                const blob = new Blob([buffer], { type: mime });
                 editorState.replacementTray.push({
                   id: 'tray_' + Math.random().toString(36).substr(2, 6),
-                  filename: fn,
+                  filename: basename,
                   url: URL.createObjectURL(blob),
                   blob: blob,
-                  size: blob.size
+                  size: blob.size,
+                  mime: mime
                 });
               }
             } catch (entryErr) {
-              console.warn('Skipping entry:', entry.name, entryErr);
+              console.warn('Skipping entry:', basename, entryErr);
             }
 
             if (i % 3 === 0) await sleep(5);
           }
         } else if (IMAGE_EXTS.has(ext)) {
+          const mime = file.type || getMimeType(file.name);
           editorState.replacementTray.push({
             id: 'tray_' + Math.random().toString(36).substr(2, 6),
             filename: file.name,
             url: URL.createObjectURL(file),
             blob: file,
-            size: file.size
+            size: file.size,
+            mime: mime
           });
         }
       }
@@ -1554,7 +1765,7 @@
       renderReplacementTray();
     } catch (err) {
       showLoading(false);
-      alert('Could not unpack replacement files: ' + err.message);
+      alert('Could not unpack replacement files: ' + getErrorMessage(err));
     }
   }
 
@@ -1568,7 +1779,6 @@
     if (hasGitHub) {
       showLoading(true, `Saving changes to GitHub for "${targetRead.title}"...`, 10, 'Committing modified pages');
       const cleanPath = (state.ghConfig.path || 'reads').replace(/^\/|\/$/g, '');
-      const folderPath = `${cleanPath}/${targetRead.id}`;
 
       try {
         for (let i = 0; i < modifiedPages.length; i++) {
@@ -1576,10 +1786,11 @@
           const pct = Math.round(((i + 1) / (modifiedPages.length + 1)) * 80) + 10;
           updateLoading(`Committing page ${i + 1} of ${modifiedPages.length}: ${page.filename}`, pct, 'Pacing commits to protect GitHub rate limits');
 
+          const fileEndpoint = `/repos/${state.ghConfig.repo}/contents/${ghPath(cleanPath, targetRead.id, page.filename)}`;
           let existingSha = page.sha;
           if (!existingSha) {
             try {
-              const info = await ghRequest(`/repos/${state.ghConfig.repo}/contents/${folderPath}/${page.filename}?ref=${state.ghConfig.branch}`);
+              const info = await ghRequest(`${fileEndpoint}?ref=${state.ghConfig.branch}`);
               existingSha = info.sha;
             } catch (e) {}
           }
@@ -1592,7 +1803,7 @@
           };
           if (existingSha) body.sha = existingSha;
 
-          const res = await ghRequest(`/repos/${state.ghConfig.repo}/contents/${folderPath}/${page.filename}`, {
+          const res = await ghRequest(fileEndpoint, {
             method: 'PUT',
             body: JSON.stringify(body)
           });
@@ -1603,10 +1814,10 @@
         }
 
         updateLoading('Updating manifest.json on GitHub...', 95, 'Saving sequence');
-        const manifestPath = `${cleanPath}/${targetRead.id}/manifest.json`;
+        const manifestEndpoint = `/repos/${state.ghConfig.repo}/contents/${ghPath(cleanPath, targetRead.id, 'manifest.json')}`;
         let manifestSha = null;
         try {
-          const ex = await ghRequest(`/repos/${state.ghConfig.repo}/contents/${manifestPath}?ref=${state.ghConfig.branch}`);
+          const ex = await ghRequest(`${manifestEndpoint}?ref=${state.ghConfig.branch}`);
           manifestSha = ex.sha;
         } catch (e) {}
 
@@ -1622,14 +1833,14 @@
         };
         if (manifestSha) manifestBody.sha = manifestSha;
 
-        await ghRequest(`/repos/${state.ghConfig.repo}/contents/${manifestPath}`, {
+        await ghRequest(manifestEndpoint, {
           method: 'PUT',
           body: JSON.stringify(manifestBody)
         });
 
       } catch (ghErr) {
         showLoading(false);
-        alert('Encountered issue while saving to GitHub: ' + ghErr.message);
+        alert('Encountered issue while saving to GitHub: ' + getErrorMessage(ghErr));
         return;
       }
     }
@@ -1771,7 +1982,7 @@
     el.btnEditOrder.addEventListener('click', toggleEditMode);
     el.btnSaveOrder.addEventListener('click', saveOrder);
     el.btnResetOrder.addEventListener('click', () => {
-      state.stagedPages = JSON.parse(JSON.stringify(state.currentRead.pages));
+      state.stagedPages = state.currentRead.pages.map(p => ({ ...p }));
       state.hasUnsavedChanges = false;
       renderEditCards();
     });
