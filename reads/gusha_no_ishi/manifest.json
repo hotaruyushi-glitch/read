@@ -1,6 +1,6 @@
 {
   "title": "gusha no ishi",
-  "updatedAt": 1795240247165,
+  "updatedAt": 1795257484639,
   "pages": [
     {
       "filename": "1.jpg",
@@ -745,10 +745,6 @@
     {
       "filename": "186.jpg",
       "order": 186
-    },
-    {
-      "filename": "188.jpg",
-      "order": 187
     }
   ]
 }
