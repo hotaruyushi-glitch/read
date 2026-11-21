@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Strip Reader — Minimalist Image & Archive Viewer</title>
   <meta name="description" content="Minimalist image strip reader. Unpacks ZIP, RAR, and images into continuous long strips with GitHub repository cloud storage and page reordering.">
   <link rel="stylesheet" href="style.css">
@@ -10,7 +10,7 @@
 <body>
 
   <!-- MINIMALIST TOP NAV BAR -->
-  <header class="top-bar">
+  <header class="top-bar" id="top-bar">
     <div class="nav-left">
       <span class="site-title">Strip Reader</span>
       <button id="btn-github-status" class="status-btn" title="Click to configure GitHub storage">
@@ -37,22 +37,55 @@
 
       <!-- Controls -->
       <button id="btn-edit-order" class="btn hidden">Edit Order</button>
-      <select id="select-width" class="select-btn">
-        <option value="760">760px</option>
+
+      <!-- Width Selector (Fit Phone, Full, Standards, Custom) -->
+      <select id="select-width" class="select-btn" title="Adjust strip width">
+        <option value="fit-screen" selected>Fit Phone / Screen</option>
+        <option value="100%">100% Full Bleed</option>
+        <option value="420">420px (Phone)</option>
+        <option value="600">600px (Phablet)</option>
+        <option value="760">760px (Webtoon)</option>
         <option value="960">960px</option>
-        <option value="1200" selected>1200px</option>
-        <option value="100%">Full Width</option>
+        <option value="1200">1200px</option>
+        <option value="custom">Custom Slider...</option>
       </select>
-      <button id="btn-open-settings" class="btn">GitHub Settings</button>
-      <button id="btn-upload-more" class="btn btn-primary">+ Upload</button>
+
+      <button id="btn-open-settings" class="btn desktop-only">GitHub Settings</button>
+      <button id="btn-upload-more" class="btn btn-primary desktop-only">+ Upload</button>
+      <button id="btn-toggle-menu" class="btn" title="Hide menu bar (Key: H)">Hide Bar</button>
+      <button id="btn-more-menu" class="btn btn-more mobile-only" title="More options">⋯</button>
     </div>
   </header>
+
+  <!-- FLOATING REVEAL BUTTON (Visible when menu bar is hidden) -->
+  <button id="btn-reveal-menu" class="reveal-menu-btn hidden" title="Show Menu Bar (Key: H)">
+    ☰ Menu
+  </button>
+
+  <!-- MANUAL WIDTH SLIDER BAR (Appears when Custom Slider is active or via menu) -->
+  <div id="width-slider-bar" class="width-slider-bar hidden">
+    <div class="slider-inner">
+      <span class="slider-label">Width: <strong id="custom-width-val">100%</strong></span>
+      <input type="range" id="input-custom-width" min="320" max="1800" step="10" value="1000" class="slider-range">
+      <button id="btn-fit-screen-quick" class="btn btn-small">Fit Screen</button>
+      <button id="btn-close-slider" class="icon-btn" title="Close slider">✕</button>
+    </div>
+  </div>
+
+  <!-- MOBILE OVERFLOW DROPDOWN -->
+  <div id="mobile-menu-dropdown" class="mobile-menu-dropdown hidden">
+    <button id="btn-mobile-edit" class="menu-item hidden">✏️ Edit Page Order</button>
+    <button id="btn-mobile-slider" class="menu-item">📏 Custom Width Slider</button>
+    <button id="btn-mobile-settings" class="menu-item">⚙️ GitHub Settings</button>
+    <button id="btn-mobile-upload" class="menu-item">📁 Upload Files</button>
+    <button id="btn-mobile-hide-bar" class="menu-item">👁️ Hide Menu Bar</button>
+  </div>
 
   <!-- HIDDEN MASTER FILE INPUT -->
   <input type="file" id="master-file-input" multiple accept=".zip,.cbz,.rar,.cbr,.7z,image/*" class="hidden-input">
 
   <!-- MAIN VIEWPORT -->
-  <main class="main-viewport">
+  <main class="main-viewport" id="main-viewport">
 
     <!-- EMPTY STATE & DROP ZONE -->
     <section id="drop-zone" class="drop-zone">
@@ -113,7 +146,7 @@
       </div>
 
       <!-- CONTINUOUS LONG STRIP -->
-      <div id="strip-outer" class="strip-outer width-1200">
+      <div id="strip-outer" class="strip-outer width-fit-screen">
         <div id="strip-container" class="strip-container">
           <!-- Continuous stacked images rendered here -->
         </div>
@@ -124,6 +157,7 @@
           <div class="footer-btns">
             <button id="btn-footer-prev" class="btn">◀ Previous Read</button>
             <button id="btn-footer-top" class="btn">↑ Top</button>
+            <button id="btn-footer-edit" class="btn">✏️ Edit / Replace Images</button>
             <button id="btn-footer-next" class="btn btn-primary">Next Read ▶</button>
             <button id="btn-footer-delete" class="btn btn-danger">Delete Read</button>
           </div>
@@ -149,13 +183,13 @@
         <div class="form-group">
           <label for="input-gh-repo">Repository (owner/repo)</label>
           <input type="text" id="input-gh-repo" placeholder="e.g. yourname/my-reads" class="text-input">
-          <span class="field-hint">hotaruyushi-glitch/read</span>
+          <span class="field-hint">A public or private GitHub repository you own.</span>
         </div>
 
         <div class="form-group">
           <label for="input-gh-token">Personal Access Token (PAT)</label>
           <input type="password" id="input-gh-token" placeholder="ghp_... or github_pat_..." class="text-input">
-          <span class="field-hint">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000</span>
+          <span class="field-hint">Token with "repo" or "Contents: Read & Write" permissions.</span>
         </div>
 
         <div class="form-group">
@@ -183,7 +217,10 @@
   <div id="modal-library" class="modal-backdrop hidden">
     <div class="modal-card modal-card-wide">
       <div class="modal-header">
-        <h2>Library (<span id="library-count">0</span> Reads)</h2>
+        <div class="modal-header-titles">
+          <h2>Library (<span id="library-count">0</span> Reads)</h2>
+          <span class="modal-sub">Use ▲ / ▼ or drag cards to reorder reads in library</span>
+        </div>
         <button class="modal-close" data-close="modal-library">✕</button>
       </div>
       <div class="modal-body">
@@ -194,6 +231,78 @@
       <div class="modal-footer">
         <button id="btn-library-sync" class="btn">Sync with GitHub</button>
         <button class="btn btn-primary" data-close="modal-library">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- READ EDITOR & IMAGE REPLACEMENT MODAL -->
+  <div id="modal-read-editor" class="modal-backdrop hidden">
+    <div class="modal-card modal-card-editor">
+      <div class="modal-header">
+        <div class="modal-header-titles">
+          <h2 id="editor-read-title">Edit Read</h2>
+          <span class="modal-sub" id="editor-read-sub">Upload local ZIP / images to replace pages or adjust page sequence</span>
+        </div>
+        <button class="modal-close" data-close="modal-read-editor">✕</button>
+      </div>
+
+      <div class="modal-body editor-body">
+        <!-- Top Action / Upload Panel -->
+        <div class="editor-upload-section">
+          <div class="editor-upload-bar">
+            <div class="editor-upload-info">
+              <span class="step-badge">Step 1</span>
+              <div>
+                <strong>Upload Local Replacement ZIP or Images</strong>
+                <p class="section-hint">Extract pages into the tray below to choose which images replace existing pages.</p>
+              </div>
+            </div>
+            <div class="editor-upload-actions">
+              <input type="file" id="input-editor-zip" class="hidden-input" multiple accept=".zip,.cbz,image/*">
+              <button id="btn-editor-upload-zip" class="btn btn-secondary">📁 Upload Local ZIP / Images</button>
+            </div>
+          </div>
+
+          <!-- Replacement Tray -->
+          <div id="editor-replacement-tray" class="editor-replacement-tray hidden">
+            <div class="tray-header">
+              <span class="tray-title">Replacement Tray (<span id="tray-count">0</span> images ready)</span>
+              <span class="tray-hint">Click "Replace" on any page below to pick from this tray, or drag a tray image onto a page.</span>
+            </div>
+            <div id="tray-images-list" class="tray-images-list">
+              <!-- Tray thumbnails rendered dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Pages Section -->
+        <div class="editor-pages-section">
+          <div class="editor-pages-header">
+            <div class="editor-pages-title-wrap">
+              <span class="step-badge">Step 2</span>
+              <strong>Read Pages (<span id="editor-pages-count">0</span> pages)</strong>
+            </div>
+            <div class="editor-pages-tools">
+              <button id="btn-editor-append-page" class="btn btn-small">+ Append New Page(s)</button>
+            </div>
+          </div>
+
+          <div id="editor-pages-grid" class="editor-pages-grid">
+            <!-- Page edit cards rendered dynamically -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Single page file input (hidden, triggered on demand) -->
+      <input type="file" id="input-single-page-replace" class="hidden-input" accept="image/*">
+      <input type="file" id="input-single-page-append" class="hidden-input" multiple accept="image/*">
+
+      <div class="modal-footer">
+        <div class="editor-footer-status" id="editor-changes-status">No changes made yet</div>
+        <div class="modal-footer-right">
+          <button class="btn" data-close="modal-read-editor">Cancel</button>
+          <button id="btn-save-read-editor" class="btn btn-primary" disabled>Save Changes</button>
+        </div>
       </div>
     </div>
   </div>
