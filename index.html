@@ -183,13 +183,13 @@
         <div class="form-group">
           <label for="input-gh-repo">Repository (owner/repo)</label>
           <input type="text" id="input-gh-repo" placeholder="e.g. yourname/my-reads" class="text-input">
-          <span class="field-hint">hotaruyushi-glitch/read</span>
+          <span class="field-hint">A public or private GitHub repository you own.</span>
         </div>
 
         <div class="form-group">
           <label for="input-gh-token">Personal Access Token (PAT)</label>
           <input type="password" id="input-gh-token" placeholder="ghp_... or github_pat_..." class="text-input">
-          <span class="field-hint">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00</span>
+          <span class="field-hint">Token with "repo" or "Contents: Read & Write" permissions.</span>
         </div>
 
         <div class="form-group">
@@ -266,8 +266,13 @@
           <!-- Replacement Tray -->
           <div id="editor-replacement-tray" class="editor-replacement-tray hidden">
             <div class="tray-header">
-              <span class="tray-title">Replacement Tray (<span id="tray-count">0</span> images ready)</span>
-              <span class="tray-hint">Click "Replace" on any page below to pick from this tray, or drag a tray image onto a page.</span>
+              <div class="tray-header-info">
+                <span class="tray-title">Replacement Tray (<span id="tray-count">0</span> images ready)</span>
+                <span class="tray-hint">Action defaults to Append. Select Replace to swap a specific page number, or drag onto a page.</span>
+              </div>
+              <div class="tray-header-tools">
+                <button id="btn-tray-append-all" class="btn btn-small" title="Append all tray images to the end of this read">+ Append All to End</button>
+              </div>
             </div>
             <div id="tray-images-list" class="tray-images-list">
               <!-- Tray thumbnails rendered dynamically -->

@@ -191,6 +191,7 @@
     editorReplacementTray: document.getElementById('editor-replacement-tray'),
     trayCount: document.getElementById('tray-count'),
     trayImagesList: document.getElementById('tray-images-list'),
+    btnTrayAppendAll: document.getElementById('btn-tray-append-all'),
     editorPagesCount: document.getElementById('editor-pages-count'),
     editorPagesGrid: document.getElementById('editor-pages-grid'),
     btnEditorAppendPage: document.getElementById('btn-editor-append-page'),
@@ -474,101 +475,221 @@
     }
   }
 
-  // Save new read to GitHub repository
+  // Concurrently upload binary blobs via GitHub Git Data API (no commits, fast, no rate limits)
+  async function uploadBlobsConcurrently(pages, repo, concurrency = 5, onProgress) {
+    let completed = 0;
+    let failed = 0;
+    let idx = 0;
+
+    const workers = Array.from({ length: Math.min(concurrency, pages.length) }, async () => {
+      while (idx < pages.length) {
+        const currentIdx = idx++;
+        const page = pages[currentIdx];
+
+        if (page.sha) {
+          completed++;
+          if (onProgress) onProgress(completed, pages.length, page.filename);
+          continue;
+        }
+
+        if (!page.blob) {
+          failed++;
+          continue;
+        }
+
+        let success = false;
+        for (let attempt = 0; attempt < 3; attempt++) {
+          try {
+            const base64 = await blobToBase64(page.blob);
+            const res = await ghRequest(`/repos/${repo}/git/blobs`, {
+              method: 'POST',
+              body: JSON.stringify({ content: base64, encoding: 'base64' })
+            });
+            if (res && res.sha) {
+              page.sha = res.sha;
+              success = true;
+              break;
+            }
+          } catch (err) {
+            console.warn(`Retry ${attempt + 1}/3 uploading blob for ${page.filename}:`, err);
+            if (attempt < 2) await sleep(500 * (attempt + 1));
+          }
+        }
+
+        if (success) {
+          completed++;
+        } else {
+          failed++;
+          console.error(`Failed to upload blob for ${page.filename}`);
+        }
+
+        if (onProgress) onProgress(completed, pages.length, page.filename);
+      }
+    });
+
+    await Promise.all(workers);
+    return { completed, failed };
+  }
+
+  // Get current branch commit sha and tree sha, auto-initializing if empty repo
+  async function getBranchHeadAndTree(repo, branch) {
+    let commitSha = null;
+    let treeSha = null;
+
+    try {
+      const branchData = await ghRequest(`/repos/${repo}/branches/${branch}`);
+      commitSha = branchData.commit?.sha;
+      treeSha = branchData.commit?.commit?.tree?.sha;
+    } catch (e) {
+      try {
+        const refData = await ghRequest(`/repos/${repo}/git/ref/heads/${branch}`);
+        commitSha = refData.object?.sha;
+        if (commitSha) {
+          const commitData = await ghRequest(`/repos/${repo}/git/commits/${commitSha}`);
+          treeSha = commitData.tree?.sha;
+        }
+      } catch (refErr) {}
+    }
+
+    if (!commitSha) {
+      // Empty repo or new branch: initialize it
+      await ghRequest(`/repos/${repo}/contents/README.md`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          message: 'Initialize Strip Reader storage',
+          content: btoa('# Strip Reader Library\nStorage for your manga and comic strip reads.\n'),
+          branch: branch
+        })
+      });
+      const branchData = await ghRequest(`/repos/${repo}/branches/${branch}`);
+      commitSha = branchData.commit?.sha;
+      treeSha = branchData.commit?.commit?.tree?.sha;
+    }
+
+    return { commitSha, treeSha };
+  }
+
+  // Save new read to GitHub repository using Git Database Trees API (1 commit for all pages)
   async function saveReadToGitHub(read) {
     if (!state.ghConnected) return;
 
     const cleanPath = (state.ghConfig.path || 'reads').replace(/^\/|\/$/g, '');
-    showLoading(true, 'Saving read to your GitHub repository...', 0, 'Committing pages...');
+    const repo = state.ghConfig.repo;
+    const branch = state.ghConfig.branch || 'main';
 
-    let failedPages = 0;
-    for (let i = 0; i < read.pages.length; i++) {
-      const page = read.pages[i];
-      const pct = Math.round(((i + 1) / read.pages.length) * 85);
-      updateLoading(`Saving page ${i + 1} of ${read.pages.length} to GitHub...`, pct, page.filename);
+    showLoading(true, 'Saving read to your GitHub repository...', 0, 'Preparing fast upload...');
 
-      if (!page.sha && page.blob) {
-        // Skip files that exceed GitHub REST API 25MB body limit
-        if (page.blob.size > 25 * 1024 * 1024) {
-          console.warn(`Skipping cloud upload for ${page.filename}: exceeds 25MB GitHub limit`);
-          failedPages++;
-          continue;
+    try {
+      // 1. Upload all page blobs in parallel (5 concurrent streams, fast & no commit locks)
+      const { completed, failed } = await uploadBlobsConcurrently(
+        read.pages,
+        repo,
+        5,
+        (curr, total, fn) => {
+          const pct = Math.round((curr / total) * 80);
+          updateLoading(`Uploading pages to GitHub: ${curr} of ${total}...`, pct, fn);
         }
+      );
 
-        try {
-          const base64 = await blobToBase64(page.blob);
-          const fileEndpoint = `/repos/${state.ghConfig.repo}/contents/${ghPath(cleanPath, read.id, page.filename)}`;
+      // 2. Fetch latest commit & tree from branch
+      updateLoading('Fetching repository branch state...', 82, branch);
+      const { commitSha, treeSha } = await getBranchHeadAndTree(repo, branch);
 
-          let existingSha = null;
-          try {
-            const exFile = await ghRequest(`${fileEndpoint}?ref=${state.ghConfig.branch}`);
-            existingSha = exFile.sha;
-          } catch (e) {}
+      // 3. Prepare manifest blob
+      updateLoading('Creating manifest blob...', 85, 'manifest.json');
+      const manifest = {
+        title: read.title,
+        createdAt: read.createdAt || Date.now(),
+        updatedAt: Date.now(),
+        pages: read.pages.map(p => ({ filename: p.filename, order: p.index }))
+      };
+      const manifestStr = JSON.stringify(manifest, null, 2);
+      const manifestBase64 = btoa(unescape(encodeURIComponent(manifestStr)));
+      const manifestBlob = await ghRequest(`/repos/${repo}/git/blobs`, {
+        method: 'POST',
+        body: JSON.stringify({ content: manifestBase64, encoding: 'base64' })
+      });
 
-          const putBody = {
-            message: `Add ${read.title} - ${page.filename}`,
-            content: base64,
-            branch: state.ghConfig.branch
-          };
-          if (existingSha) putBody.sha = existingSha;
+      // 4. Prepare library order blob
+      updateLoading('Creating library order blob...', 88, 'library_order.json');
+      const order = state.reads.map(r => r.id);
+      if (!order.includes(read.id)) order.push(read.id);
+      const orderStr = JSON.stringify({ order, updatedAt: Date.now() }, null, 2);
+      const orderBase64 = btoa(unescape(encodeURIComponent(orderStr)));
+      const orderBlob = await ghRequest(`/repos/${repo}/git/blobs`, {
+        method: 'POST',
+        body: JSON.stringify({ content: orderBase64, encoding: 'base64' })
+      });
 
-          const res = await ghRequest(fileEndpoint, {
-            method: 'PUT',
-            body: JSON.stringify(putBody)
+      // 5. Construct Git tree entries
+      const treeItems = [];
+      for (const page of read.pages) {
+        if (page.sha) {
+          treeItems.push({
+            path: `${cleanPath}/${read.id}/${page.filename}`,
+            mode: '100644',
+            type: 'blob',
+            sha: page.sha
           });
-          page.sha = res.content?.sha || null;
-        } catch (pageErr) {
-          console.warn(`Could not save page ${page.filename} to GitHub:`, pageErr);
-          failedPages++;
         }
       }
-
-      // Pacing delay to avoid secondary rate limits
-      await sleep(250);
-    }
-
-    const manifest = {
-      title: read.title,
-      createdAt: read.createdAt || Date.now(),
-      updatedAt: Date.now(),
-      pages: read.pages.map(p => ({ filename: p.filename, order: p.index }))
-    };
-
-    updateLoading('Saving manifest to GitHub...', 95, 'manifest.json');
-    const manifestBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(manifest, null, 2))));
-    const manifestEndpoint = `/repos/${state.ghConfig.repo}/contents/${ghPath(cleanPath, read.id, 'manifest.json')}`;
-
-    let manifestSha = null;
-    try {
-      const ex = await ghRequest(`${manifestEndpoint}?ref=${state.ghConfig.branch}`);
-      manifestSha = ex.sha;
-    } catch (e) {}
-
-    const manifestBody = {
-      message: `Add manifest for ${read.title}`,
-      content: manifestBase64,
-      branch: state.ghConfig.branch
-    };
-    if (manifestSha) manifestBody.sha = manifestSha;
-
-    try {
-      await ghRequest(manifestEndpoint, {
-        method: 'PUT',
-        body: JSON.stringify(manifestBody)
+      treeItems.push({
+        path: `${cleanPath}/${read.id}/manifest.json`,
+        mode: '100644',
+        type: 'blob',
+        sha: manifestBlob.sha
       });
-    } catch (mErr) {
-      console.warn('Could not save manifest.json to GitHub:', mErr);
+      treeItems.push({
+        path: `${cleanPath}/library_order.json`,
+        mode: '100644',
+        type: 'blob',
+        sha: orderBlob.sha
+      });
+
+      // 6. Create Git Tree (all pages combined into 1 tree)
+      updateLoading('Creating Git tree on GitHub...', 92, `${treeItems.length} files`);
+      const newTree = await ghRequest(`/repos/${repo}/git/trees`, {
+        method: 'POST',
+        body: JSON.stringify({
+          base_tree: treeSha,
+          tree: treeItems
+        })
+      });
+
+      // 7. Create single Commit
+      updateLoading('Creating single Git commit...', 95, '1 commit for all pages');
+      const newCommit = await ghRequest(`/repos/${repo}/git/commits`, {
+        method: 'POST',
+        body: JSON.stringify({
+          message: `Add ${read.title} (${read.pages.length} pages)`,
+          tree: newTree.sha,
+          parents: [commitSha]
+        })
+      });
+
+      // 8. Update branch ref
+      updateLoading('Updating branch reference...', 98, branch);
+      await ghRequest(`/repos/${repo}/git/refs/heads/${branch}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          sha: newCommit.sha,
+          force: false
+        })
+      });
+
+      read.isGitHub = true;
+      showLoading(false);
+
+      // Update local storage order
+      localStorage.setItem('sr_library_order', JSON.stringify(order));
+
+      if (failed > 0) {
+        alert(`Read saved to GitHub: ${read.pages.length - failed} of ${read.pages.length} pages uploaded (${failed} pages encountered read errors).`);
+      }
+    } catch (saveErr) {
+      showLoading(false);
+      throw saveErr;
     }
-
-    read.isGitHub = true;
-    showLoading(false);
-
-    if (failedPages > 0) {
-      alert(`Read saved to GitHub: ${read.pages.length - failedPages} of ${read.pages.length} pages synced successfully (${failedPages} pages skipped or delayed).`);
-    }
-
-    // Update library order on GitHub
-    await saveLibraryOrder();
   }
 
   // Save library order (both to localStorage and optionally to GitHub repo)
@@ -1434,6 +1555,79 @@
     openModal(el.modalReadEditor);
   }
 
+  function appendTrayItem(trayIdx) {
+    const item = editorState.replacementTray[trayIdx];
+    if (!item) return;
+
+    editorState.pages.push({
+      id: 'p_app_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+      index: editorState.pages.length + 1,
+      filename: item.filename,
+      url: item.url,
+      blob: item.blob,
+      size: item.size,
+      sha: null,
+      isModified: true
+    });
+    renderEditorPages();
+    updateEditorChangesStatus();
+  }
+
+  function appendAllTrayItems() {
+    if (!editorState.replacementTray || editorState.replacementTray.length === 0) return;
+
+    editorState.replacementTray.forEach((item, idx) => {
+      editorState.pages.push({
+        id: 'p_app_' + Date.now() + '_' + idx + '_' + Math.random().toString(36).substr(2, 4),
+        index: editorState.pages.length + 1,
+        filename: item.filename,
+        url: item.url,
+        blob: item.blob,
+        size: item.size,
+        sha: null,
+        isModified: true
+      });
+    });
+
+    renderEditorPages();
+    updateEditorChangesStatus();
+  }
+
+  function executeTrayAction(trayIdx, action, selectEl) {
+    const item = editorState.replacementTray[trayIdx];
+    if (!item) return;
+
+    if (action === 'append') {
+      appendTrayItem(trayIdx);
+      return;
+    }
+
+    if (action === 'replace') {
+      const pageCount = editorState.pages.length;
+      if (pageCount === 0) {
+        alert('There are no pages to replace yet. Use append instead.');
+        if (selectEl) selectEl.value = 'append';
+        return;
+      }
+
+      const input = prompt(`Replace which page with "${item.filename}"?\nEnter page number (1 to ${pageCount}):`, '1');
+      if (!input) {
+        if (selectEl) selectEl.value = 'append';
+        return;
+      }
+
+      const pageNum = parseInt(input.trim(), 10);
+      if (isNaN(pageNum) || pageNum < 1 || pageNum > pageCount) {
+        alert(`Please enter a valid page number between 1 and ${pageCount}.`);
+        if (selectEl) selectEl.value = 'append';
+        return;
+      }
+
+      replacePageWithTrayItem(pageNum - 1, trayIdx);
+      if (selectEl) selectEl.value = 'append';
+    }
+  }
+
   function renderReplacementTray() {
     el.trayImagesList.innerHTML = '';
     el.trayCount.textContent = editorState.replacementTray.length;
@@ -1454,7 +1648,13 @@
       card.innerHTML = `
         <img class="tray-thumb" src="${item.url}" alt="${item.filename}">
         <div class="tray-filename" title="${item.filename}">${item.filename}</div>
-        <button class="tray-btn-use" title="Assign this image to replace a page">Assign to Page...</button>
+        <div class="tray-actions">
+          <select class="tray-action-select" aria-label="Action for ${item.filename}">
+            <option value="append" selected>+ Append (Default)</option>
+            <option value="replace">Replace Page #</option>
+          </select>
+          <button class="tray-btn-apply" title="Execute selected action">Apply</button>
+        </div>
       `;
 
       card.addEventListener('dragstart', (e) => {
@@ -1462,46 +1662,22 @@
         e.dataTransfer.effectAllowed = 'copy';
       });
 
-      card.querySelector('.tray-btn-use').addEventListener('click', (e) => {
+      const selectEl = card.querySelector('.tray-action-select');
+      const applyBtn = card.querySelector('.tray-btn-apply');
+
+      selectEl.addEventListener('change', () => {
+        if (selectEl.value === 'replace') {
+          executeTrayAction(trayIdx, 'replace', selectEl);
+        }
+      });
+
+      applyBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        promptAssignTrayItem(trayIdx);
+        executeTrayAction(trayIdx, selectEl.value, selectEl);
       });
 
       el.trayImagesList.appendChild(card);
     });
-  }
-
-  function promptAssignTrayItem(trayIdx) {
-    const item = editorState.replacementTray[trayIdx];
-    if (!item) return;
-
-    const pageCount = editorState.pages.length;
-    const input = prompt(`Assign "${item.filename}" to replace which page?\nEnter a page number (1 to ${pageCount}), or type "append" to add at end:`, '1');
-    if (!input) return;
-
-    if (input.trim().toLowerCase() === 'append') {
-      editorState.pages.push({
-        id: 'p_app_' + Date.now(),
-        index: editorState.pages.length + 1,
-        filename: item.filename,
-        url: item.url,
-        blob: item.blob,
-        size: item.size,
-        sha: null,
-        isModified: true
-      });
-      renderEditorPages();
-      updateEditorChangesStatus();
-      return;
-    }
-
-    const pageNum = parseInt(input.trim(), 10);
-    if (isNaN(pageNum) || pageNum < 1 || pageNum > pageCount) {
-      alert(`Please enter a valid page number between 1 and ${pageCount}.`);
-      return;
-    }
-
-    replacePageWithTrayItem(pageNum - 1, trayIdx);
   }
 
   function replacePageWithTrayItem(pageIdx, trayIdx) {
@@ -1773,69 +1949,109 @@
     const targetRead = editorState.read;
     if (!targetRead) return;
 
-    const modifiedPages = editorState.pages.filter(p => p.isModified);
     const hasGitHub = state.ghConnected && targetRead.isGitHub;
 
     if (hasGitHub) {
-      showLoading(true, `Saving changes to GitHub for "${targetRead.title}"...`, 10, 'Committing modified pages');
+      showLoading(true, `Saving changes to GitHub for "${targetRead.title}"...`, 10, 'Uploading modified pages...');
       const cleanPath = (state.ghConfig.path || 'reads').replace(/^\/|\/$/g, '');
+      const repo = state.ghConfig.repo;
+      const branch = state.ghConfig.branch || 'main';
 
       try {
-        for (let i = 0; i < modifiedPages.length; i++) {
-          const page = modifiedPages[i];
-          const pct = Math.round(((i + 1) / (modifiedPages.length + 1)) * 80) + 10;
-          updateLoading(`Committing page ${i + 1} of ${modifiedPages.length}: ${page.filename}`, pct, 'Pacing commits to protect GitHub rate limits');
-
-          const fileEndpoint = `/repos/${state.ghConfig.repo}/contents/${ghPath(cleanPath, targetRead.id, page.filename)}`;
-          let existingSha = page.sha;
-          if (!existingSha) {
-            try {
-              const info = await ghRequest(`${fileEndpoint}?ref=${state.ghConfig.branch}`);
-              existingSha = info.sha;
-            } catch (e) {}
-          }
-
-          const base64 = await blobToBase64(page.blob);
-          const body = {
-            message: `Update ${targetRead.title} - ${page.filename}`,
-            content: base64,
-            branch: state.ghConfig.branch
-          };
-          if (existingSha) body.sha = existingSha;
-
-          const res = await ghRequest(fileEndpoint, {
-            method: 'PUT',
-            body: JSON.stringify(body)
-          });
-          page.sha = res.content?.sha || null;
-          page.isModified = false;
-
-          await sleep(250);
+        // 1. Concurrently upload any newly added or modified page blobs
+        const pagesToUpload = editorState.pages.filter(p => p.blob && (!p.sha || p.isModified));
+        if (pagesToUpload.length > 0) {
+          await uploadBlobsConcurrently(
+            pagesToUpload,
+            repo,
+            5,
+            (curr, total, fn) => {
+              const pct = Math.round((curr / total) * 60) + 10;
+              updateLoading(`Uploading pages: ${curr} of ${total}...`, pct, fn);
+            }
+          );
         }
 
-        updateLoading('Updating manifest.json on GitHub...', 95, 'Saving sequence');
-        const manifestEndpoint = `/repos/${state.ghConfig.repo}/contents/${ghPath(cleanPath, targetRead.id, 'manifest.json')}`;
-        let manifestSha = null;
-        try {
-          const ex = await ghRequest(`${manifestEndpoint}?ref=${state.ghConfig.branch}`);
-          manifestSha = ex.sha;
-        } catch (e) {}
+        // 2. Fetch current branch head and base tree
+        updateLoading('Fetching repository branch state...', 75, branch);
+        const { commitSha, treeSha } = await getBranchHeadAndTree(repo, branch);
 
+        // 3. Prepare updated manifest blob
+        updateLoading('Creating manifest blob...', 82, 'manifest.json');
         const manifest = {
           title: targetRead.title,
           updatedAt: Date.now(),
           pages: editorState.pages.map((p, idx) => ({ filename: p.filename, order: idx + 1 }))
         };
-        const manifestBody = {
-          message: `Update manifest and pages for ${targetRead.title}`,
-          content: btoa(unescape(encodeURIComponent(JSON.stringify(manifest, null, 2)))),
-          branch: state.ghConfig.branch
-        };
-        if (manifestSha) manifestBody.sha = manifestSha;
+        const manifestStr = JSON.stringify(manifest, null, 2);
+        const manifestBase64 = btoa(unescape(encodeURIComponent(manifestStr)));
+        const manifestBlob = await ghRequest(`/repos/${repo}/git/blobs`, {
+          method: 'POST',
+          body: JSON.stringify({ content: manifestBase64, encoding: 'base64' })
+        });
 
-        await ghRequest(manifestEndpoint, {
-          method: 'PUT',
-          body: JSON.stringify(manifestBody)
+        // 4. Build Git Tree items
+        const treeItems = [];
+        // Add active pages
+        editorState.pages.forEach(p => {
+          if (p.sha) {
+            treeItems.push({
+              path: `${cleanPath}/${targetRead.id}/${p.filename}`,
+              mode: '100644',
+              type: 'blob',
+              sha: p.sha
+            });
+          }
+        });
+        // Delete any original pages that were removed
+        const activeFilenames = new Set(editorState.pages.map(p => p.filename));
+        (targetRead.pages || []).forEach(origP => {
+          if (!activeFilenames.has(origP.filename)) {
+            treeItems.push({
+              path: `${cleanPath}/${targetRead.id}/${origP.filename}`,
+              mode: '100644',
+              type: 'blob',
+              sha: null
+            });
+          }
+        });
+        // Manifest entry
+        treeItems.push({
+          path: `${cleanPath}/${targetRead.id}/manifest.json`,
+          mode: '100644',
+          type: 'blob',
+          sha: manifestBlob.sha
+        });
+
+        // 5. Create Git Tree
+        updateLoading('Creating Git tree on GitHub...', 90, `${treeItems.length} entries`);
+        const newTree = await ghRequest(`/repos/${repo}/git/trees`, {
+          method: 'POST',
+          body: JSON.stringify({
+            base_tree: treeSha,
+            tree: treeItems
+          })
+        });
+
+        // 6. Create Commit
+        updateLoading('Creating single Git commit...', 95, '1 commit for all updates');
+        const newCommit = await ghRequest(`/repos/${repo}/git/commits`, {
+          method: 'POST',
+          body: JSON.stringify({
+            message: `Update ${targetRead.title} (${editorState.pages.length} pages)`,
+            tree: newTree.sha,
+            parents: [commitSha]
+          })
+        });
+
+        // 7. Update branch ref
+        updateLoading('Updating branch reference...', 98, branch);
+        await ghRequest(`/repos/${repo}/git/refs/heads/${branch}`, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            sha: newCommit.sha,
+            force: false
+          })
         });
 
       } catch (ghErr) {
@@ -1865,6 +2081,7 @@
     }
 
     updateLibraryUI();
+    alert(`Changes saved successfully for "${targetRead.title}" (${targetRead.pages.length} pages).`);
   }
 
   // --- EVENT LISTENERS ---
@@ -2015,6 +2232,9 @@
     }
     if (el.btnSaveReadEditor) {
       el.btnSaveReadEditor.addEventListener('click', saveReadEditorChanges);
+    }
+    if (el.btnTrayAppendAll) {
+      el.btnTrayAppendAll.addEventListener('click', appendAllTrayItems);
     }
 
     // Modal close buttons
