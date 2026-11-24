@@ -1,7 +1,6 @@
 {
   "title": "Gusha no Ishi",
-  "createdAt": 1795493860475,
-  "updatedAt": 1795493860475,
+  "updatedAt": 1795494135847,
   "pages": [
     {
       "filename": "1.jpg",
@@ -748,52 +747,44 @@
       "order": 186
     },
     {
-      "filename": "187.jpg",
+      "filename": "188.jpg",
       "order": 187
     },
     {
-      "filename": "188.jpg",
+      "filename": "189.jpg",
       "order": 188
     },
     {
-      "filename": "189.jpg",
+      "filename": "190.jpg",
       "order": 189
     },
     {
-      "filename": "190.jpg",
+      "filename": "191.jpg",
       "order": 190
     },
     {
-      "filename": "191.jpg",
+      "filename": "192.jpg",
       "order": 191
     },
     {
-      "filename": "192.jpg",
+      "filename": "193.jpg",
       "order": 192
     },
     {
-      "filename": "193.jpg",
+      "filename": "194.jpg",
       "order": 193
     },
     {
-      "filename": "194.jpg",
+      "filename": "195.jpg",
       "order": 194
     },
     {
-      "filename": "195.jpg",
+      "filename": "196.jpg",
       "order": 195
     },
     {
-      "filename": "196.jpg",
-      "order": 196
-    },
-    {
       "filename": "197.jpg",
-      "order": 197
-    },
-    {
-      "filename": "final.jpg",
-      "order": 198
+      "order": 196
     }
   ]
 }
