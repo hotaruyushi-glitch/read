@@ -1,0 +1,59 @@
+{
+  "title": "Orekko Haiboku 2",
+  "createdAt": 1795636355171,
+  "updatedAt": 1795636355171,
+  "pages": [
+    {
+      "filename": "1.jpg",
+      "order": 1
+    },
+    {
+      "filename": "2.jpg",
+      "order": 2
+    },
+    {
+      "filename": "3.jpg",
+      "order": 3
+    },
+    {
+      "filename": "4.jpg",
+      "order": 4
+    },
+    {
+      "filename": "5.jpg",
+      "order": 5
+    },
+    {
+      "filename": "6.jpg",
+      "order": 6
+    },
+    {
+      "filename": "7.jpg",
+      "order": 7
+    },
+    {
+      "filename": "8.jpg",
+      "order": 8
+    },
+    {
+      "filename": "9.jpg",
+      "order": 9
+    },
+    {
+      "filename": "10.jpg",
+      "order": 10
+    },
+    {
+      "filename": "11.jpg",
+      "order": 11
+    },
+    {
+      "filename": "12.jpg",
+      "order": 12
+    },
+    {
+      "filename": "final.jpg",
+      "order": 13
+    }
+  ]
+}
