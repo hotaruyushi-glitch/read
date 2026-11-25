@@ -1,7 +1,6 @@
 {
   "title": "Watashi Kirei_ Ch.1-3",
-  "createdAt": 1795631368790,
-  "updatedAt": 1795631368790,
+  "updatedAt": 1795631608702,
   "pages": [
     {
       "filename": "1.jpg",
@@ -272,12 +271,100 @@
       "order": 67
     },
     {
-      "filename": "68.jpg",
+      "filename": "final.jpg",
       "order": 68
     },
     {
-      "filename": "final.jpg",
+      "filename": "1.webp",
       "order": 69
+    },
+    {
+      "filename": "2.webp",
+      "order": 70
+    },
+    {
+      "filename": "3.webp",
+      "order": 71
+    },
+    {
+      "filename": "4.webp",
+      "order": 72
+    },
+    {
+      "filename": "5.webp",
+      "order": 73
+    },
+    {
+      "filename": "6.webp",
+      "order": 74
+    },
+    {
+      "filename": "7.webp",
+      "order": 75
+    },
+    {
+      "filename": "8.webp",
+      "order": 76
+    },
+    {
+      "filename": "9.webp",
+      "order": 77
+    },
+    {
+      "filename": "10.webp",
+      "order": 78
+    },
+    {
+      "filename": "11.webp",
+      "order": 79
+    },
+    {
+      "filename": "12.webp",
+      "order": 80
+    },
+    {
+      "filename": "13.webp",
+      "order": 81
+    },
+    {
+      "filename": "14.webp",
+      "order": 82
+    },
+    {
+      "filename": "15.webp",
+      "order": 83
+    },
+    {
+      "filename": "16.webp",
+      "order": 84
+    },
+    {
+      "filename": "17.webp",
+      "order": 85
+    },
+    {
+      "filename": "18.webp",
+      "order": 86
+    },
+    {
+      "filename": "19.webp",
+      "order": 87
+    },
+    {
+      "filename": "20.webp",
+      "order": 88
+    },
+    {
+      "filename": "21.jpg",
+      "order": 89
+    },
+    {
+      "filename": "22.webp",
+      "order": 90
+    },
+    {
+      "filename": "23.webp",
+      "order": 91
     }
   ]
 }
