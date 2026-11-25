@@ -1,7 +1,6 @@
 {
   "title": "Kachiku no Danran - Gatherings of Livestock",
-  "createdAt": 1795625367667,
-  "updatedAt": 1795625367667,
+  "updatedAt": 1795625660651,
   "pages": [
     {
       "filename": "1.webp",
@@ -810,10 +809,6 @@
     {
       "filename": "202.webp",
       "order": 202
-    },
-    {
-      "filename": "final.jpg",
-      "order": 203
     }
   ]
 }
