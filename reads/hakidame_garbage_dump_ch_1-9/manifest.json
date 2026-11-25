@@ -1,7 +1,6 @@
 {
   "title": "Hakidame _ Garbage Dump Ch. 1-9",
-  "createdAt": 1795626105269,
-  "updatedAt": 1795626105269,
+  "updatedAt": 1795626338231,
   "pages": [
     {
       "filename": "1.jpg",
@@ -838,30 +837,6 @@
     {
       "filename": "209.jpg",
       "order": 209
-    },
-    {
-      "filename": "210.jpg",
-      "order": 210
-    },
-    {
-      "filename": "211.jpg",
-      "order": 211
-    },
-    {
-      "filename": "212.jpg",
-      "order": 212
-    },
-    {
-      "filename": "213.jpg",
-      "order": 213
-    },
-    {
-      "filename": "214.jpg",
-      "order": 214
-    },
-    {
-      "filename": "final.jpg",
-      "order": 215
     }
   ]
 }
