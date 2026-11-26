@@ -219,11 +219,30 @@
       <div class="modal-header">
         <div class="modal-header-titles">
           <h2>Library (<span id="library-count">0</span> Reads)</h2>
-          <span class="modal-sub">Use ▲ / ▼ or drag cards to reorder reads in library</span>
+          <span class="modal-sub">Click # to jump, use ▲/▼/⤒/⤓ or drag to reorder, filter by playlist</span>
         </div>
         <button class="modal-close" data-close="modal-library">✕</button>
       </div>
       <div class="modal-body">
+        <!-- Playlist Tabs Bar -->
+        <div class="library-playlist-bar">
+          <div id="library-playlist-tabs" class="playlist-tabs">
+            <!-- Playlist tabs rendered dynamically -->
+          </div>
+          <button id="btn-new-playlist" class="btn btn-small btn-new-playlist" title="Create new playlist">+ Playlist</button>
+        </div>
+
+        <!-- Sort Presets Toolbar -->
+        <div class="library-toolbar">
+          <div class="sort-presets">
+            <span class="toolbar-label">Sort:</span>
+            <button class="sort-preset-btn active" data-sort="custom">Custom</button>
+            <button class="sort-preset-btn" data-sort="az">A–Z</button>
+            <button class="sort-preset-btn" data-sort="newest">Newest</button>
+          </div>
+          <span id="library-sync-status" class="library-sync-status"></span>
+        </div>
+
         <div id="library-grid" class="library-grid">
           <!-- Library cards dynamically loaded -->
         </div>
@@ -259,6 +278,8 @@
             </div>
             <div class="editor-upload-actions">
               <input type="file" id="input-editor-zip" class="hidden-input" multiple accept=".zip,.cbz,image/*">
+              <input type="file" id="input-editor-resume-zip" class="hidden-input" multiple accept=".zip,.cbz,image/*">
+              <button id="btn-editor-resume-missing" class="btn btn-secondary" title="Select original ZIP or images to upload only pages missing from this read">↻ Resume Missing Pages</button>
               <button id="btn-editor-upload-zip" class="btn btn-secondary">📁 Upload Local ZIP / Images</button>
             </div>
           </div>

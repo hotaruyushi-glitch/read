@@ -1509,3 +1509,244 @@ html, body {
   border-color: var(--border-focus);
 }
 
+/* ==========================================================================
+   PLAYLISTS, SORT PRESETS & EFFORTLESS REORDERING
+   ========================================================================== */
+.library-playlist-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.playlist-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.playlist-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.playlist-tab:hover {
+  color: var(--text);
+  border-color: var(--border-focus);
+}
+.playlist-tab.active {
+  background: #ffffff;
+  color: #121212;
+  border-color: #ffffff;
+  font-weight: 600;
+}
+
+.playlist-tab-count {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  opacity: 0.75;
+}
+
+.playlist-tab-del {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: 0.75rem;
+  line-height: 1;
+  padding: 0 2px;
+  margin-left: 2px;
+  cursor: pointer;
+  opacity: 0.55;
+}
+.playlist-tab-del:hover {
+  opacity: 1;
+}
+
+.btn-new-playlist {
+  flex-shrink: 0;
+}
+
+.library-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.sort-presets {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.toolbar-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-right: 0.2rem;
+}
+
+.sort-preset-btn {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  padding: 3px 9px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sort-preset-btn:hover {
+  color: var(--text);
+  border-color: var(--border-focus);
+}
+.sort-preset-btn.active {
+  background: var(--elevated);
+  color: var(--text);
+  border-color: var(--text);
+  font-weight: 600;
+}
+
+.library-sync-status {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+/* Clickable position number & inline jump input */
+.library-order-num {
+  cursor: pointer;
+  padding: 3px 5px;
+  border-radius: 3px;
+  border: 1px solid transparent;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.library-order-num:hover {
+  border-color: var(--border-focus);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.library-order-input {
+  width: 42px;
+  background: var(--bg);
+  border: 1px solid #ffffff;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-align: center;
+  padding: 2px 3px;
+  border-radius: 3px;
+  outline: none;
+}
+
+/* 2x2 Reorder Grid (▲/▼ + ⤒/⤓) */
+.library-reorder-grid {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  gap: 2px;
+}
+
+.library-card-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.library-playlist-tags {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.3rem;
+}
+
+.playlist-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.65rem;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.playlist-chip:hover {
+  border-color: var(--border-focus);
+  color: var(--text);
+}
+.playlist-chip.assigned {
+  background: #ffffff;
+  color: #121212;
+  border-color: #ffffff;
+  font-weight: 600;
+}
+
+.library-playlist-popover {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0.5rem 0.85rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+}
+
+.popover-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-right: 0.25rem;
+}
+
+.library-btn-resume {
+  color: var(--text);
+  border-color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+.library-btn-resume:hover {
+  background: #ffffff;
+  color: #121212;
+}
+
+.library-empty-msg {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  padding: 2rem 1rem;
+  border: 1px dashed var(--border);
+  border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+  .library-playlist-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .btn-new-playlist {
+    align-self: flex-start;
+  }
+  .library-reorder-grid {
+    grid-template-columns: repeat(2, auto);
+  }
+}

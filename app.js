@@ -23,6 +23,13 @@
     },
     ghConnected: false,
     reads: [], // List of loaded reads
+    playlists: [], // [{ id, name }]
+    activePlaylistId: localStorage.getItem('sr_active_playlist') || 'all',
+    sortMode: localStorage.getItem('sr_sort_mode') || 'custom',
+    customOrder: [], // Saved custom read ID order
+    openPlaylistPopoverReadId: null,
+    syncDebounceTimer: null,
+
     activeReadIndex: -1,
     currentRead: null,
     stripWidth: localStorage.getItem('sr_strip_width') || (window.innerWidth <= 768 ? 'fit-screen' : 'fit-screen'),
@@ -45,7 +52,57 @@
     'png', 'webp', 'gif', 'avif', 'bmp',
     'svg', 'tiff', 'tif', 'jxl'
   ]);
-  const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+
+  /**
+   * Multi-segment numeric natural sort.
+   * Ensures "2.jpg" always comes before "19.jpg" and "20.jpg",
+   * and handles multi-segment names like "ch2_p10.png" vs "ch10_p2.png".
+   */
+  function naturalCompare(a, b) {
+    const strA = String(a || '');
+    const strB = String(b || '');
+    const chunksA = strA.match(/(\d+|\D+)/g) || [];
+    const chunksB = strB.match(/(\d+|\D+)/g) || [];
+    const len = Math.min(chunksA.length, chunksB.length);
+
+    let leadingZeroTieBreaker = 0;
+
+    for (let i = 0; i < len; i++) {
+      const partA = chunksA[i];
+      const partB = chunksB[i];
+      const isNumA = /^\d+$/.test(partA);
+      const isNumB = /^\d+$/.test(partB);
+
+      if (isNumA && isNumB) {
+        // Strip leading zeros for numeric comparison without overflow
+        const trimA = partA.replace(/^0+/, '') || '0';
+        const trimB = partB.replace(/^0+/, '') || '0';
+        if (trimA.length !== trimB.length) {
+          return trimA.length - trimB.length;
+        }
+        if (trimA !== trimB) {
+          return trimA < trimB ? -1 : 1;
+        }
+        if (leadingZeroTieBreaker === 0 && partA.length !== partB.length) {
+          leadingZeroTieBreaker = partA.length - partB.length;
+        }
+      } else {
+        const lowerA = partA.toLowerCase();
+        const lowerB = partB.toLowerCase();
+        if (lowerA !== lowerB) {
+          return lowerA < lowerB ? -1 : 1;
+        }
+        if (partA !== partB) {
+          return partA < partB ? -1 : 1;
+        }
+      }
+    }
+
+    if (chunksA.length !== chunksB.length) {
+      return chunksA.length - chunksB.length;
+    }
+    return leadingZeroTieBreaker;
+  }
 
   function getMimeType(filename) {
     const ext = (filename || '').split('.').pop().toLowerCase();
@@ -181,12 +238,17 @@
     libraryGrid: document.getElementById('library-grid'),
     libraryCount: document.getElementById('library-count'),
     btnLibrarySync: document.getElementById('btn-library-sync'),
+    libraryPlaylistTabs: document.getElementById('library-playlist-tabs'),
+    btnNewPlaylist: document.getElementById('btn-new-playlist'),
+    librarySyncStatus: document.getElementById('library-sync-status'),
 
     // Read Editor & Image Replacement
     modalReadEditor: document.getElementById('modal-read-editor'),
     editorReadTitle: document.getElementById('editor-read-title'),
     editorReadSub: document.getElementById('editor-read-sub'),
     inputEditorZip: document.getElementById('input-editor-zip'),
+    inputEditorResumeZip: document.getElementById('input-editor-resume-zip'),
+    btnEditorResumeMissing: document.getElementById('btn-editor-resume-missing'),
     btnEditorUploadZip: document.getElementById('btn-editor-upload-zip'),
     editorReplacementTray: document.getElementById('editor-replacement-tray'),
     trayCount: document.getElementById('tray-count'),
@@ -218,7 +280,26 @@
 
     // Check if GitHub is already configured
     if (state.ghConfig.repo && state.ghConfig.token) {
-      await connectGitHub();
+      // Stale-while-revalidate: render from localStorage cache instantly
+      const hasCache = loadLibraryFromCache();
+      if (hasCache) {
+        state.ghConnected = true;
+        updateGitHubStatusUI(true);
+        renderPlaylistTabs();
+        updateSortPresetUI();
+        updateLibraryUI();
+        const visible = getVisibleReads();
+        if (visible.length > 0) {
+          const firstIdx = state.reads.indexOf(visible[0]);
+          loadRead(firstIdx >= 0 ? firstIdx : 0);
+        } else if (state.reads.length > 0) {
+          loadRead(0);
+        }
+        // Silently revalidate in the background
+        syncReadsFromGitHub({ silent: true });
+      } else {
+        await connectGitHub();
+      }
     } else {
       updateGitHubStatusUI(false);
     }
@@ -316,23 +397,298 @@
           throw new Error(errMsg || `GitHub API rate limit (HTTP ${res.status})`);
         }
 
+        if (res.status >= 500 && res.status < 600 && attempt < retries) {
+          const waitMs = Math.pow(2, attempt) * 1000;
+          await sleep(waitMs);
+          continue;
+        }
+
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
           const subMsg = errData.errors && errData.errors[0]?.message;
           const detail = subMsg ? `${errData.message}: ${subMsg}` : errData.message;
-          throw new Error(detail || `GitHub API error: HTTP ${res.status}`);
+          const err = new Error(detail || `GitHub API error: HTTP ${res.status}`);
+          err.status = res.status;
+          throw err;
         }
         return await res.json();
       } catch (err) {
         lastError = err;
         const msg = getErrorMessage(err);
-        if (attempt >= retries || !/rate limit|secondary|fetch|network/i.test(msg)) {
+        if (attempt >= retries || !/rate limit|secondary|fetch|network|50\d/i.test(msg)) {
           throw (err instanceof Error ? err : new Error(msg));
         }
-        await sleep(1500 * (attempt + 1));
+        await sleep(1500 * Math.pow(2, attempt));
       }
     }
     throw (lastError instanceof Error ? lastError : new Error(getErrorMessage(lastError)));
+  }
+
+  function buildRawGitHubUrl(repo, branch, cleanPath, readId, filename) {
+    return `https://raw.githubusercontent.com/${repo}/${encodeURIComponent(branch)}/${ghPath(cleanPath, readId, filename)}`;
+  }
+
+  // --- LOCALSTORAGE CACHE (STALE-WHILE-REVALIDATE) ---
+  function getLibraryCacheKey() {
+    const repo = (state.ghConfig.repo || '').trim();
+    const branch = (state.ghConfig.branch || 'main').trim();
+    const cleanPath = (state.ghConfig.path || 'reads').replace(/^\/|\/$/g, '');
+    return `sr_lib_cache_v1_${repo}_${branch}_${cleanPath}`;
+  }
+
+  function buildLibraryIndexPayload() {
+    const repo = (state.ghConfig.repo || '').trim();
+    const branch = (state.ghConfig.branch || 'main').trim();
+    const cleanPath = (state.ghConfig.path || 'reads').replace(/^\/|\/$/g, '');
+
+    return {
+      version: 1,
+      updatedAt: Date.now(),
+      sortMode: state.sortMode,
+      order: state.reads.map(r => r.id),
+      playlists: state.playlists.map(pl => ({ id: pl.id, name: pl.name })),
+      reads: state.reads.map(r => ({
+        id: r.id,
+        title: r.title,
+        path: r.path || `${cleanPath}/${r.id}`,
+        createdAt: r.createdAt || Date.now(),
+        updatedAt: r.updatedAt || Date.now(),
+        playlists: Array.isArray(r.playlists) ? r.playlists : [],
+        isGitHub: !!r.isGitHub,
+        hasMissingPages: !!r.hasMissingPages,
+        pageCount: r.pages.length,
+        pages: r.pages.map((p, idx) => ({
+          index: idx + 1,
+          filename: p.filename,
+          url: (p.url && !p.url.startsWith('blob:'))
+            ? p.url
+            : (r.isGitHub ? buildRawGitHubUrl(repo, branch, cleanPath, r.id, p.filename) : ''),
+          size: p.size || 0,
+          sha: p.sha || null
+        }))
+      }))
+    };
+  }
+
+  function saveLibraryToCache() {
+    if (!state.ghConfig.repo) return;
+    try {
+      const payload = buildLibraryIndexPayload();
+      localStorage.setItem(getLibraryCacheKey(), JSON.stringify(payload));
+      localStorage.setItem('sr_library_order', JSON.stringify(payload.order));
+    } catch (e) {
+      console.warn('Could not save library cache to localStorage:', e);
+    }
+  }
+
+  function loadLibraryFromCache() {
+    if (!state.ghConfig.repo) return false;
+    try {
+      const raw = localStorage.getItem(getLibraryCacheKey());
+      if (!raw) return false;
+      const data = JSON.parse(raw);
+      if (!data || !Array.isArray(data.reads) || data.reads.length === 0) return false;
+
+      const repo = state.ghConfig.repo.trim();
+      const branch = state.ghConfig.branch.trim() || 'main';
+      const cleanPath = (state.ghConfig.path || 'reads').replace(/^\/|\/$/g, '');
+
+      state.playlists = Array.isArray(data.playlists) ? data.playlists : [];
+      if (data.sortMode) state.sortMode = data.sortMode;
+
+      // Ensure activePlaylistId is still valid
+      if (state.activePlaylistId !== 'all' && !state.playlists.some(p => p.id === state.activePlaylistId)) {
+        state.activePlaylistId = 'all';
+      }
+
+      state.reads = data.reads.map(r => ({
+        id: r.id,
+        title: r.title || r.id.replace(/_/g, ' '),
+        path: r.path || `${cleanPath}/${r.id}`,
+        createdAt: r.createdAt || 0,
+        updatedAt: r.updatedAt || 0,
+        playlists: Array.isArray(r.playlists) ? r.playlists : [],
+        isGitHub: r.isGitHub !== false,
+        hasMissingPages: !!r.hasMissingPages,
+        pageCount: (r.pages || []).length,
+        pages: (r.pages || []).map((p, idx) => ({
+          index: idx + 1,
+          filename: p.filename,
+          url: p.url || buildRawGitHubUrl(repo, branch, cleanPath, r.id, p.filename),
+          size: p.size || 0,
+          sha: p.sha || null
+        }))
+      }));
+
+      applyOrderOrSort(data.order || []);
+      return true;
+    } catch (e) {
+      console.warn('Could not load library cache:', e);
+      return false;
+    }
+  }
+
+  function applyOrderOrSort(savedOrder = []) {
+    if (state.sortMode === 'az') {
+      state.reads.sort((a, b) => naturalCompare(a.title, b.title));
+    } else if (state.sortMode === 'newest') {
+      state.reads.sort((a, b) => (b.createdAt || b.updatedAt || 0) - (a.createdAt || a.updatedAt || 0));
+    } else if (Array.isArray(savedOrder) && savedOrder.length > 0) {
+      const orderMap = new Map();
+      savedOrder.forEach((id, idx) => orderMap.set(id, idx));
+      state.reads.sort((a, b) => {
+        const oA = orderMap.has(a.id) ? orderMap.get(a.id) : 999999;
+        const oB = orderMap.has(b.id) ? orderMap.get(b.id) : 999999;
+        return oA - oB;
+      });
+    }
+  }
+
+  // --- PLAYLISTS & VISIBLE READS ---
+  function getVisibleReads() {
+    if (!state.activePlaylistId || state.activePlaylistId === 'all') {
+      return state.reads;
+    }
+    return state.reads.filter(r => Array.isArray(r.playlists) && r.playlists.includes(state.activePlaylistId));
+  }
+
+  function setActivePlaylist(playlistId) {
+    state.activePlaylistId = playlistId || 'all';
+    localStorage.setItem('sr_active_playlist', state.activePlaylistId);
+    renderPlaylistTabs();
+    updateLibraryUI();
+    updateNavUI();
+  }
+
+  function createPlaylist() {
+    const name = prompt('Enter new playlist / category name:');
+    if (!name || !name.trim()) return;
+    const cleanName = name.trim();
+    const id = 'pl_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+    state.playlists.push({ id, name: cleanName });
+    saveLibraryToCache();
+    renderPlaylistTabs();
+    updateLibraryUI();
+    debouncedSyncLibrary();
+  }
+
+  function deletePlaylist(playlistId) {
+    const pl = state.playlists.find(p => p.id === playlistId);
+    if (!pl) return;
+    if (!confirm(`Delete playlist "${pl.name}"? Reads inside will remain in your library.`)) return;
+
+    state.playlists = state.playlists.filter(p => p.id !== playlistId);
+    state.reads.forEach(r => {
+      if (Array.isArray(r.playlists)) {
+        r.playlists = r.playlists.filter(id => id !== playlistId);
+      }
+    });
+    if (state.activePlaylistId === playlistId) {
+      state.activePlaylistId = 'all';
+      localStorage.setItem('sr_active_playlist', 'all');
+    }
+
+    saveLibraryToCache();
+    renderPlaylistTabs();
+    updateLibraryUI();
+    updateNavUI();
+    debouncedSyncLibrary();
+  }
+
+  function toggleReadPlaylist(readId, playlistId) {
+    const read = state.reads.find(r => r.id === readId);
+    if (!read) return;
+    if (!Array.isArray(read.playlists)) read.playlists = [];
+
+    const idx = read.playlists.indexOf(playlistId);
+    if (idx >= 0) {
+      read.playlists.splice(idx, 1);
+    } else {
+      read.playlists.push(playlistId);
+    }
+
+    saveLibraryToCache();
+    renderPlaylistTabs();
+    updateLibraryUI();
+    updateNavUI();
+    debouncedSyncLibrary();
+  }
+
+  function renderPlaylistTabs() {
+    if (!el.libraryPlaylistTabs) return;
+    el.libraryPlaylistTabs.innerHTML = '';
+
+    // "All" tab
+    const allBtn = document.createElement('button');
+    allBtn.className = `playlist-tab ${state.activePlaylistId === 'all' ? 'active' : ''}`;
+    allBtn.innerHTML = `<span>All</span><span class="playlist-tab-count">${state.reads.length}</span>`;
+    allBtn.addEventListener('click', () => setActivePlaylist('all'));
+    el.libraryPlaylistTabs.appendChild(allBtn);
+
+    // Custom playlist tabs
+    state.playlists.forEach(pl => {
+      const count = state.reads.filter(r => Array.isArray(r.playlists) && r.playlists.includes(pl.id)).length;
+      const tab = document.createElement('button');
+      tab.className = `playlist-tab ${state.activePlaylistId === pl.id ? 'active' : ''}`;
+      tab.innerHTML = `
+        <span>${pl.name}</span>
+        <span class="playlist-tab-count">${count}</span>
+        <span class="playlist-tab-del" title="Delete playlist">✕</span>
+      `;
+      tab.addEventListener('click', (e) => {
+        if (e.target.closest('.playlist-tab-del')) {
+          e.stopPropagation();
+          deletePlaylist(pl.id);
+          return;
+        }
+        setActivePlaylist(pl.id);
+      });
+      el.libraryPlaylistTabs.appendChild(tab);
+    });
+  }
+
+  function updateSortPresetUI() {
+    document.querySelectorAll('.sort-preset-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.sort === state.sortMode);
+    });
+  }
+
+  function applySortPreset(mode) {
+    state.sortMode = mode;
+    localStorage.setItem('sr_sort_mode', mode);
+    updateSortPresetUI();
+
+    const activeRead = state.reads[state.activeReadIndex];
+    if (mode === 'az') {
+      state.reads.sort((a, b) => naturalCompare(a.title, b.title));
+    } else if (mode === 'newest') {
+      state.reads.sort((a, b) => (b.createdAt || b.updatedAt || 0) - (a.createdAt || a.updatedAt || 0));
+    } else if (mode === 'custom' && state.customOrder.length > 0) {
+      applyOrderOrSort(state.customOrder);
+    }
+
+    if (activeRead) {
+      state.activeReadIndex = state.reads.indexOf(activeRead);
+    }
+
+    saveLibraryToCache();
+    updateLibraryUI();
+    updateNavUI();
+    debouncedSyncLibrary();
+  }
+
+  function setSyncStatusText(text) {
+    if (el.librarySyncStatus) {
+      el.librarySyncStatus.textContent = text;
+    }
+  }
+
+  function debouncedSyncLibrary() {
+    setSyncStatusText('Saving...');
+    if (state.syncDebounceTimer) clearTimeout(state.syncDebounceTimer);
+    state.syncDebounceTimer = setTimeout(async () => {
+      await saveLibraryOrder();
+    }, 1000);
   }
 
   async function connectGitHub() {
@@ -347,7 +703,7 @@
       localStorage.setItem('sr_gh_branch', state.ghConfig.branch.trim() || 'main');
       localStorage.setItem('sr_gh_path', state.ghConfig.path.trim() || 'reads');
 
-      await syncReadsFromGitHub();
+      await syncReadsFromGitHub({ silent: false });
       showLoading(false);
     } catch (err) {
       showLoading(false);
@@ -367,119 +723,212 @@
     }
   }
 
-  // Sync existing reads from GitHub repository
-  async function syncReadsFromGitHub() {
+  // Sync existing reads from GitHub repository (1-request library_index.json with legacy folder fallback)
+  async function syncReadsFromGitHub(options = {}) {
+    const silent = !!options.silent;
     if (!state.ghConnected) return;
 
+    const repo = state.ghConfig.repo.trim();
+    const branch = state.ghConfig.branch.trim() || 'main';
+    const cleanPath = (state.ghConfig.path || 'reads').replace(/^\/|\/$/g, '');
+    const previousActiveId = state.currentRead ? state.currentRead.id : null;
+
+    if (silent) setSyncStatusText('Syncing...');
+
     try {
-      const cleanPath = (state.ghConfig.path || 'reads').replace(/^\/|\/$/g, '');
-      const contents = await ghRequest(`/repos/${state.ghConfig.repo}/contents/${cleanPath}?ref=${state.ghConfig.branch}`).catch(() => []);
-
-      // Check if global library_order.json exists on GitHub
-      let savedOrder = [];
-      const orderFile = contents.find(f => f.name === 'library_order.json');
-      if (orderFile) {
-        try {
-          const orderRes = await fetch(orderFile.download_url);
-          const orderData = await orderRes.json();
-          if (Array.isArray(orderData.order)) savedOrder = orderData.order;
-        } catch (e) {
-          console.warn('Could not read library_order.json:', e);
+      // 1. Try single-request master library_index.json first
+      let indexData = null;
+      try {
+        const indexRes = await fetch(
+          `https://api.github.com/repos/${repo}/contents/${ghPath(cleanPath, 'library_index.json')}?ref=${encodeURIComponent(branch)}`,
+          {
+            headers: {
+              'Accept': 'application/vnd.github.v3.raw',
+              'Authorization': `Bearer ${state.ghConfig.token.trim()}`
+            }
+          }
+        );
+        if (indexRes.ok) {
+          indexData = await indexRes.json();
         }
+      } catch (e) {
+        console.warn('Could not fetch library_index.json directly:', e);
       }
 
-      // If not on GitHub, check local storage
-      if (savedOrder.length === 0) {
-        const localOrder = localStorage.getItem('sr_library_order');
-        if (localOrder) {
-          try { savedOrder = JSON.parse(localOrder); } catch (e) {}
+      if (indexData && Array.isArray(indexData.reads)) {
+        state.playlists = Array.isArray(indexData.playlists) ? indexData.playlists : [];
+        if (Array.isArray(indexData.order)) {
+          state.customOrder = indexData.order;
         }
-      }
+        if (state.activePlaylistId !== 'all' && !state.playlists.some(p => p.id === state.activePlaylistId)) {
+          state.activePlaylistId = 'all';
+        }
 
-      const folders = contents.filter(item => item.type === 'dir');
-      const loadedReads = [];
-
-      for (const dir of folders) {
-        try {
-          const files = await ghRequest(`/repos/${state.ghConfig.repo}/contents/${dir.path}?ref=${state.ghConfig.branch}`);
-
-          const manifestFile = files.find(f => f.name === 'manifest.json');
-          let manifest = null;
-          if (manifestFile) {
-            const manifestRes = await fetch(manifestFile.download_url);
-            manifest = await manifestRes.json();
-          }
-
-          const imageFiles = files.filter(f => {
-            const ext = f.name.split('.').pop().toLowerCase();
-            return IMAGE_EXTS.has(ext);
-          });
-
-          // Sequence images according to manifest or natural sort
-          if (manifest && manifest.pages && manifest.pages.length > 0) {
-            const orderMap = new Map();
-            manifest.pages.forEach((p, idx) => orderMap.set(p.filename, idx));
-            imageFiles.sort((a, b) => {
-              const oA = orderMap.has(a.name) ? orderMap.get(a.name) : 9999;
-              const oB = orderMap.has(b.name) ? orderMap.get(b.name) : 9999;
-              return oA - oB;
-            });
-          } else {
-            imageFiles.sort((a, b) => collator.compare(a.name, b.name));
-          }
-
-          const pages = imageFiles.map((f, idx) => ({
+        const loadedReads = indexData.reads.map(r => {
+          const pages = (r.pages || []).map((p, idx) => ({
             index: idx + 1,
-            filename: f.name,
-            url: f.download_url,
-            size: f.size,
-            sha: f.sha
+            filename: p.filename,
+            url: p.url || buildRawGitHubUrl(repo, branch, cleanPath, r.id, p.filename),
+            size: p.size || 0,
+            sha: p.sha || null
           }));
+          return {
+            id: r.id,
+            title: r.title || r.id.replace(/_/g, ' '),
+            path: r.path || `${cleanPath}/${r.id}`,
+            createdAt: r.createdAt || 0,
+            updatedAt: r.updatedAt || 0,
+            playlists: Array.isArray(r.playlists) ? r.playlists : [],
+            pages,
+            pageCount: pages.length,
+            isGitHub: true,
+            hasMissingPages: !!r.hasMissingPages
+          };
+        });
 
-          if (pages.length > 0) {
-            loadedReads.push({
-              id: dir.name,
-              title: manifest?.title || dir.name.replace(/_/g, ' '),
-              path: dir.path,
-              pages: pages,
-              pageCount: pages.length,
-              isGitHub: true
-            });
+        state.reads = loadedReads;
+        applyOrderOrSort(indexData.order || []);
+        saveLibraryToCache();
+      } else {
+        // Fallback: legacy folder-by-folder scan, then auto-generate library_index.json
+        const contents = await ghRequest(`/repos/${repo}/contents/${cleanPath}?ref=${encodeURIComponent(branch)}`).catch(() => []);
+
+        let savedOrder = [];
+        let savedPlaylists = [];
+        let savedReadPlaylists = {};
+        const orderFile = contents.find(f => f.name === 'library_order.json');
+        if (orderFile) {
+          try {
+            const orderRes = await fetch(orderFile.download_url);
+            const orderData = await orderRes.json();
+            if (Array.isArray(orderData.order)) savedOrder = orderData.order;
+            if (Array.isArray(orderData.playlists)) savedPlaylists = orderData.playlists;
+            if (orderData.readPlaylists && typeof orderData.readPlaylists === 'object') {
+              savedReadPlaylists = orderData.readPlaylists;
+            }
+          } catch (e) {
+            console.warn('Could not read library_order.json:', e);
           }
-        } catch (e) {
-          console.warn(`Could not load folder ${dir.name}:`, e);
+        }
+
+        if (savedOrder.length === 0) {
+          const localOrder = localStorage.getItem('sr_library_order');
+          if (localOrder) {
+            try { savedOrder = JSON.parse(localOrder); } catch (e) {}
+          }
+        }
+
+        state.playlists = savedPlaylists;
+        state.customOrder = savedOrder;
+
+        const folders = contents.filter(item => item.type === 'dir');
+        const loadedReads = [];
+
+        for (const dir of folders) {
+          try {
+            const files = await ghRequest(`/repos/${repo}/contents/${dir.path}?ref=${encodeURIComponent(branch)}`);
+
+            const manifestFile = files.find(f => f.name === 'manifest.json');
+            let manifest = null;
+            if (manifestFile) {
+              const manifestRes = await fetch(manifestFile.download_url);
+              manifest = await manifestRes.json();
+            }
+
+            const imageFiles = files.filter(f => {
+              const ext = f.name.split('.').pop().toLowerCase();
+              return IMAGE_EXTS.has(ext);
+            });
+
+            // Sequence images according to manifest or multi-segment natural sort
+            if (manifest && manifest.pages && manifest.pages.length > 0) {
+              const orderMap = new Map();
+              manifest.pages.forEach((p, idx) => orderMap.set(p.filename, idx));
+              imageFiles.sort((a, b) => {
+                const oA = orderMap.has(a.name) ? orderMap.get(a.name) : 999999;
+                const oB = orderMap.has(b.name) ? orderMap.get(b.name) : 999999;
+                if (oA !== oB) return oA - oB;
+                return naturalCompare(a.name, b.name);
+              });
+            } else {
+              imageFiles.sort((a, b) => naturalCompare(a.name, b.name));
+            }
+
+            const pages = imageFiles.map((f, idx) => ({
+              index: idx + 1,
+              filename: f.name,
+              url: buildRawGitHubUrl(repo, branch, cleanPath, dir.name, f.name),
+              size: f.size,
+              sha: f.sha
+            }));
+
+            if (pages.length > 0) {
+              loadedReads.push({
+                id: dir.name,
+                title: manifest?.title || dir.name.replace(/_/g, ' '),
+                path: dir.path,
+                createdAt: manifest?.createdAt || 0,
+                updatedAt: manifest?.updatedAt || 0,
+                playlists: Array.isArray(manifest?.playlists)
+                  ? manifest.playlists
+                  : (Array.isArray(savedReadPlaylists[dir.name]) ? savedReadPlaylists[dir.name] : []),
+                pages,
+                pageCount: pages.length,
+                isGitHub: true
+              });
+            }
+          } catch (e) {
+            console.warn(`Could not load folder ${dir.name}:`, e);
+          }
+        }
+
+        state.reads = loadedReads;
+        applyOrderOrSort(savedOrder);
+        saveLibraryToCache();
+
+        // Create master library_index.json so future reloads take 1 request
+        if (state.reads.length > 0) {
+          saveLibraryOrder().catch(e => console.warn('Could not write initial library_index.json:', e));
         }
       }
 
-      // Sort reads according to saved library order if available
-      if (savedOrder.length > 0) {
-        const orderMap = new Map();
-        savedOrder.forEach((id, idx) => orderMap.set(id, idx));
-        loadedReads.sort((a, b) => {
-          const oA = orderMap.has(a.id) ? orderMap.get(a.id) : 9999;
-          const oB = orderMap.has(b.id) ? orderMap.get(b.id) : 9999;
-          return oA - oB;
-        });
+      renderPlaylistTabs();
+      updateSortPresetUI();
+      updateLibraryUI();
+      if (silent) setSyncStatusText('Synced');
+
+      // Preserve active read if silently revalidating
+      if (silent && previousActiveId) {
+        const newIdx = state.reads.findIndex(r => r.id === previousActiveId);
+        if (newIdx >= 0) {
+          state.activeReadIndex = newIdx;
+          state.currentRead = state.reads[newIdx];
+          updateNavUI();
+          return;
+        }
       }
 
-      state.reads = loadedReads;
-      updateLibraryUI();
-
-      if (state.reads.length > 0) {
+      const visible = getVisibleReads();
+      if (visible.length > 0) {
+        const firstIdx = state.reads.indexOf(visible[0]);
+        loadRead(firstIdx >= 0 ? firstIdx : 0);
+      } else if (state.reads.length > 0) {
         loadRead(0);
       } else {
         showEmptyState();
       }
     } catch (err) {
+      if (silent) setSyncStatusText('Sync error');
       console.warn('Error reading from GitHub:', err);
     }
   }
 
-  // Concurrently upload binary blobs via GitHub Git Data API (no commits, fast, no rate limits)
-  async function uploadBlobsConcurrently(pages, repo, concurrency = 5, onProgress) {
+  // Concurrently upload binary blobs via GitHub Git Data API with exponential backoff retry
+  async function uploadBlobsConcurrently(pages, repo, concurrency = 4, onProgress) {
     let completed = 0;
     let failed = 0;
     let idx = 0;
+    const failedPages = [];
 
     const workers = Array.from({ length: Math.min(concurrency, pages.length) }, async () => {
       while (idx < pages.length) {
@@ -494,11 +943,12 @@
 
         if (!page.blob) {
           failed++;
+          failedPages.push(page);
           continue;
         }
 
         let success = false;
-        for (let attempt = 0; attempt < 3; attempt++) {
+        for (let attempt = 0; attempt < 4; attempt++) {
           try {
             const base64 = await blobToBase64(page.blob);
             const res = await ghRequest(`/repos/${repo}/git/blobs`, {
@@ -511,8 +961,11 @@
               break;
             }
           } catch (err) {
-            console.warn(`Retry ${attempt + 1}/3 uploading blob for ${page.filename}:`, err);
-            if (attempt < 2) await sleep(500 * (attempt + 1));
+            console.warn(`Retry ${attempt + 1}/4 uploading blob for ${page.filename}:`, err);
+            if (attempt < 3) {
+              const backoffMs = 800 * Math.pow(2, attempt) + Math.floor(Math.random() * 300);
+              await sleep(backoffMs);
+            }
           }
         }
 
@@ -520,6 +973,7 @@
           completed++;
         } else {
           failed++;
+          failedPages.push(page);
           console.error(`Failed to upload blob for ${page.filename}`);
         }
 
@@ -528,7 +982,7 @@
     });
 
     await Promise.all(workers);
-    return { completed, failed };
+    return { completed, failed, failedPages };
   }
 
   // Get current branch commit sha and tree sha, auto-initializing if empty repo
@@ -569,38 +1023,62 @@
     return { commitSha, treeSha };
   }
 
-  // Save new read to GitHub repository using Git Database Trees API (1 commit for all pages)
+  // Save new or resumed read to GitHub repository using Git Database Trees API (1 commit for all pages)
   async function saveReadToGitHub(read) {
     if (!state.ghConnected) return;
 
     const cleanPath = (state.ghConfig.path || 'reads').replace(/^\/|\/$/g, '');
-    const repo = state.ghConfig.repo;
-    const branch = state.ghConfig.branch || 'main';
+    const repo = state.ghConfig.repo.trim();
+    const branch = state.ghConfig.branch.trim() || 'main';
 
     showLoading(true, 'Saving read to your GitHub repository...', 0, 'Preparing fast upload...');
 
     try {
-      // 1. Upload all page blobs in parallel (5 concurrent streams, fast & no commit locks)
-      const { completed, failed } = await uploadBlobsConcurrently(
+      // 1. Pass 1: Upload all page blobs without sha in parallel (4 concurrent streams, exponential backoff)
+      const pass1 = await uploadBlobsConcurrently(
         read.pages,
         repo,
-        5,
+        4,
         (curr, total, fn) => {
-          const pct = Math.round((curr / total) * 80);
+          const pct = Math.round((curr / total) * 75);
           updateLoading(`Uploading pages to GitHub: ${curr} of ${total}...`, pct, fn);
         }
       );
 
-      // 2. Fetch latest commit & tree from branch
+      // 2. Pass 2: Retry any failed pages with lower concurrency and longer backoff
+      let remainingFailed = pass1.failedPages || [];
+      if (remainingFailed.length > 0) {
+        updateLoading(`2nd-pass retry for ${remainingFailed.length} failed page(s)...`, 77, 'Recovering dropped pages...');
+        await sleep(2000);
+        const pass2 = await uploadBlobsConcurrently(
+          remainingFailed,
+          repo,
+          2,
+          (curr, total, fn) => {
+            updateLoading(`2nd-pass retry: ${curr} of ${total} recovered...`, 78, fn);
+          }
+        );
+        remainingFailed = pass2.failedPages || [];
+      }
+
+      const uploadedPagesCount = read.pages.filter(p => p.sha).length;
+      if (uploadedPagesCount === 0) {
+        throw new Error('All page uploads failed. Check your connection or token and use Resume Missing Pages.');
+      }
+
+      // 3. Fetch latest commit & tree from branch
       updateLoading('Fetching repository branch state...', 82, branch);
       const { commitSha, treeSha } = await getBranchHeadAndTree(repo, branch);
 
-      // 3. Prepare manifest blob
+      // 4. Prepare manifest blob
       updateLoading('Creating manifest blob...', 85, 'manifest.json');
+      read.createdAt = read.createdAt || Date.now();
+      read.updatedAt = Date.now();
       const manifest = {
         title: read.title,
-        createdAt: read.createdAt || Date.now(),
-        updatedAt: Date.now(),
+        createdAt: read.createdAt,
+        updatedAt: read.updatedAt,
+        playlists: Array.isArray(read.playlists) ? read.playlists : [],
         pages: read.pages.map(p => ({ filename: p.filename, order: p.index }))
       };
       const manifestStr = JSON.stringify(manifest, null, 2);
@@ -610,18 +1088,42 @@
         body: JSON.stringify({ content: manifestBase64, encoding: 'base64' })
       });
 
-      // 4. Prepare library order blob
-      updateLoading('Creating library order blob...', 88, 'library_order.json');
+      read.isGitHub = true;
+      read.hasMissingPages = remainingFailed.length > 0;
+
+      // 5. Prepare library_order.json & library_index.json blobs
+      updateLoading('Updating library index...', 88, 'library_index.json');
       const order = state.reads.map(r => r.id);
       if (!order.includes(read.id)) order.push(read.id);
-      const orderStr = JSON.stringify({ order, updatedAt: Date.now() }, null, 2);
+
+      const readPlaylists = {};
+      state.reads.forEach(r => {
+        if (Array.isArray(r.playlists) && r.playlists.length > 0) {
+          readPlaylists[r.id] = r.playlists;
+        }
+      });
+
+      const orderStr = JSON.stringify({
+        order,
+        playlists: state.playlists,
+        readPlaylists,
+        updatedAt: Date.now()
+      }, null, 2);
       const orderBase64 = btoa(unescape(encodeURIComponent(orderStr)));
       const orderBlob = await ghRequest(`/repos/${repo}/git/blobs`, {
         method: 'POST',
         body: JSON.stringify({ content: orderBase64, encoding: 'base64' })
       });
 
-      // 5. Construct Git tree entries
+      const indexPayload = buildLibraryIndexPayload();
+      const indexStr = JSON.stringify(indexPayload, null, 2);
+      const indexBase64 = btoa(unescape(encodeURIComponent(indexStr)));
+      const indexBlob = await ghRequest(`/repos/${repo}/git/blobs`, {
+        method: 'POST',
+        body: JSON.stringify({ content: indexBase64, encoding: 'base64' })
+      });
+
+      // 6. Construct Git tree entries
       const treeItems = [];
       for (const page of read.pages) {
         if (page.sha) {
@@ -645,8 +1147,14 @@
         type: 'blob',
         sha: orderBlob.sha
       });
+      treeItems.push({
+        path: `${cleanPath}/library_index.json`,
+        mode: '100644',
+        type: 'blob',
+        sha: indexBlob.sha
+      });
 
-      // 6. Create Git Tree (all pages combined into 1 tree)
+      // 7. Create Git Tree (all pages combined into 1 tree)
       updateLoading('Creating Git tree on GitHub...', 92, `${treeItems.length} files`);
       const newTree = await ghRequest(`/repos/${repo}/git/trees`, {
         method: 'POST',
@@ -656,18 +1164,18 @@
         })
       });
 
-      // 7. Create single Commit
+      // 8. Create single Commit
       updateLoading('Creating single Git commit...', 95, '1 commit for all pages');
       const newCommit = await ghRequest(`/repos/${repo}/git/commits`, {
         method: 'POST',
         body: JSON.stringify({
-          message: `Add ${read.title} (${read.pages.length} pages)`,
+          message: `Add/Update ${read.title} (${uploadedPagesCount}/${read.pages.length} pages)`,
           tree: newTree.sha,
           parents: [commitSha]
         })
       });
 
-      // 8. Update branch ref
+      // 9. Update branch ref
       updateLoading('Updating branch reference...', 98, branch);
       await ghRequest(`/repos/${repo}/git/refs/heads/${branch}`, {
         method: 'PATCH',
@@ -677,72 +1185,159 @@
         })
       });
 
-      read.isGitHub = true;
+      saveLibraryToCache();
+      updateLibraryUI();
       showLoading(false);
 
-      // Update local storage order
-      localStorage.setItem('sr_library_order', JSON.stringify(order));
-
-      if (failed > 0) {
-        alert(`Read saved to GitHub: ${read.pages.length - failed} of ${read.pages.length} pages uploaded (${failed} pages encountered read errors).`);
+      if (remainingFailed.length > 0) {
+        alert(`Read partially saved to GitHub: ${uploadedPagesCount} of ${read.pages.length} pages uploaded (${remainingFailed.length} failed after 2 passes). Click "Resume Missing Pages" in the Library to upload only the remaining pages.`);
       }
     } catch (saveErr) {
+      read.hasMissingPages = read.pages.some(p => !p.sha);
+      saveLibraryToCache();
+      updateLibraryUI();
       showLoading(false);
       throw saveErr;
     }
   }
 
-  // Save library order (both to localStorage and optionally to GitHub repo)
-  async function saveLibraryOrder() {
-    const order = state.reads.map(r => r.id);
-    localStorage.setItem('sr_library_order', JSON.stringify(order));
+  // Resume uploading only pages without a GitHub SHA
+  async function resumeMissingPages(readIdx) {
+    const read = state.reads[readIdx];
+    if (!read) return;
+    if (!state.ghConnected) {
+      alert('Please connect GitHub in Settings first.');
+      return;
+    }
 
-    if (state.ghConnected) {
+    const hasInMemoryMissing = read.pages.some(p => !p.sha && p.blob);
+    if (hasInMemoryMissing) {
       try {
-        const cleanPath = (state.ghConfig.path || 'reads').replace(/^\/|\/$/g, '');
-        const orderPath = `${cleanPath}/library_order.json`;
-
-        let currentSha = null;
-        try {
-          const existing = await ghRequest(`/repos/${state.ghConfig.repo}/contents/${orderPath}?ref=${state.ghConfig.branch}`);
-          currentSha = existing.sha;
-        } catch (e) {}
-
-        const body = {
-          message: 'Update library order',
-          content: btoa(unescape(encodeURIComponent(JSON.stringify({ order, updatedAt: Date.now() }, null, 2)))),
-          branch: state.ghConfig.branch
-        };
-        if (currentSha) body.sha = currentSha;
-
-        await ghRequest(`/repos/${state.ghConfig.repo}/contents/${orderPath}`, {
-          method: 'PUT',
-          body: JSON.stringify(body)
-        });
+        await saveReadToGitHub(read);
+        alert(`Resume complete for "${read.title}"!`);
       } catch (err) {
-        console.warn('Could not sync library order to GitHub:', err);
+        alert('Resume encountered an issue: ' + getErrorMessage(err));
+      }
+    } else {
+      // Open Read Editor and trigger Resume Missing Pages file picker
+      closeModal(el.modalLibrary);
+      openReadEditor(readIdx);
+      if (el.inputEditorResumeZip) {
+        el.inputEditorResumeZip.value = '';
+        el.inputEditorResumeZip.click();
       }
     }
   }
 
-  // Move library item manually, one position at a time
-  async function moveLibraryItem(index, delta) {
-    const targetIdx = index + delta;
-    if (targetIdx < 0 || targetIdx >= state.reads.length) return;
+  // Save library order, playlists, and master library_index.json (to localStorage and GitHub repo via 1 commit)
+  async function saveLibraryOrder() {
+    saveLibraryToCache();
 
-    // Track active read if affected
+    if (!state.ghConnected) {
+      setSyncStatusText('Saved locally');
+      return;
+    }
+
+    try {
+      setSyncStatusText('Syncing...');
+      const cleanPath = (state.ghConfig.path || 'reads').replace(/^\/|\/$/g, '');
+      const repo = state.ghConfig.repo.trim();
+      const branch = state.ghConfig.branch.trim() || 'main';
+
+      const order = state.reads.map(r => r.id);
+      if (state.sortMode === 'custom') {
+        state.customOrder = order;
+      }
+
+      const readPlaylists = {};
+      state.reads.forEach(r => {
+        if (Array.isArray(r.playlists) && r.playlists.length > 0) {
+          readPlaylists[r.id] = r.playlists;
+        }
+      });
+
+      const orderStr = JSON.stringify({
+        order,
+        playlists: state.playlists,
+        readPlaylists,
+        updatedAt: Date.now()
+      }, null, 2);
+
+      const indexStr = JSON.stringify(buildLibraryIndexPayload(), null, 2);
+
+      const { commitSha, treeSha } = await getBranchHeadAndTree(repo, branch);
+
+      const [orderBlob, indexBlob] = await Promise.all([
+        ghRequest(`/repos/${repo}/git/blobs`, {
+          method: 'POST',
+          body: JSON.stringify({ content: btoa(unescape(encodeURIComponent(orderStr))), encoding: 'base64' })
+        }),
+        ghRequest(`/repos/${repo}/git/blobs`, {
+          method: 'POST',
+          body: JSON.stringify({ content: btoa(unescape(encodeURIComponent(indexStr))), encoding: 'base64' })
+        })
+      ]);
+
+      const newTree = await ghRequest(`/repos/${repo}/git/trees`, {
+        method: 'POST',
+        body: JSON.stringify({
+          base_tree: treeSha,
+          tree: [
+            { path: `${cleanPath}/library_order.json`, mode: '100644', type: 'blob', sha: orderBlob.sha },
+            { path: `${cleanPath}/library_index.json`, mode: '100644', type: 'blob', sha: indexBlob.sha }
+          ]
+        })
+      });
+
+      const newCommit = await ghRequest(`/repos/${repo}/git/commits`, {
+        method: 'POST',
+        body: JSON.stringify({
+          message: 'Update library index, order & playlists',
+          tree: newTree.sha,
+          parents: [commitSha]
+        })
+      });
+
+      await ghRequest(`/repos/${repo}/git/refs/heads/${branch}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ sha: newCommit.sha, force: false })
+      });
+
+      setSyncStatusText('Synced');
+    } catch (err) {
+      setSyncStatusText('Sync failed');
+      console.warn('Could not sync library index/order to GitHub:', err);
+    }
+  }
+
+  // Move library item from index to targetIdx (supports ▲/▼, Top, Bottom, and direct # jump)
+  function moveLibraryItemTo(fromIdx, toIdx) {
+    if (fromIdx < 0 || fromIdx >= state.reads.length) return;
+    const clampedTarget = Math.max(0, Math.min(state.reads.length - 1, toIdx));
+    if (fromIdx === clampedTarget) return;
+
     const activeRead = state.reads[state.activeReadIndex];
-
-    const [moved] = state.reads.splice(index, 1);
-    state.reads.splice(targetIdx, 0, moved);
+    const [moved] = state.reads.splice(fromIdx, 1);
+    state.reads.splice(clampedTarget, 0, moved);
 
     if (activeRead) {
       state.activeReadIndex = state.reads.findIndex(r => r === activeRead);
     }
 
+    state.sortMode = 'custom';
+    state.customOrder = state.reads.map(r => r.id);
+    localStorage.setItem('sr_sort_mode', 'custom');
+    updateSortPresetUI();
+
+    saveLibraryToCache();
     updateLibraryUI();
     updateNavUI();
-    await saveLibraryOrder();
+    debouncedSyncLibrary();
+  }
+
+  // Move library item manually, one position at a time
+  function moveLibraryItem(index, delta) {
+    moveLibraryItemTo(index, index + delta);
   }
 
   // Update page order within a read on GitHub
@@ -847,7 +1442,7 @@
         throw new Error('No valid images (JPG, PNG, WEBP, etc.) found in archive.');
       }
 
-      entries.sort((a, b) => collator.compare(a.basename, b.basename));
+      entries.sort((a, b) => naturalCompare(a.basename, b.basename));
 
       const pages = [];
       for (let i = 0; i < entries.length; i++) {
@@ -887,17 +1482,22 @@
       }
 
       const readId = sanitizeId(file.name.replace(/\.[^/.]+$/, '')) || `read_${Date.now()}`;
+      const now = Date.now();
       const newRead = {
         id: readId,
         title: file.name.replace(/\.[^/.]+$/, ''),
+        createdAt: now,
+        updatedAt: now,
+        playlists: state.activePlaylistId && state.activePlaylistId !== 'all' ? [state.activePlaylistId] : [],
         pages: pages,
         pageCount: pages.length,
         isGitHub: false
       };
 
       state.reads.push(newRead);
+      saveLibraryToCache();
+      renderPlaylistTabs();
       updateLibraryUI();
-      saveLibraryOrder();
       loadRead(state.reads.length - 1);
       showLoading(false);
 
@@ -907,7 +1507,7 @@
         } catch (ghErr) {
           console.error('GitHub save error:', ghErr);
           const msg = getErrorMessage(ghErr);
-          alert(`"${newRead.title}" loaded into reader successfully! Cloud sync to GitHub encountered an issue: ${msg}. You can retry or edit from the library.`);
+          alert(`"${newRead.title}" loaded into reader successfully! Cloud sync to GitHub encountered an issue: ${msg}. You can retry or click "Resume Missing Pages" from the library.`);
         }
       }
     } catch (err) {
@@ -920,7 +1520,7 @@
   async function processLooseImages(files) {
     showLoading(true, 'Processing image batch...', 30, `${files.length} images`);
 
-    files.sort((a, b) => collator.compare(a.name, b.name));
+    files.sort((a, b) => naturalCompare(a.name, b.name));
 
     const pages = files.map((file, idx) => {
       const mime = file.type || getMimeType(file.name);
@@ -937,18 +1537,23 @@
     const dateStr = new Date().toISOString().slice(0, 10);
     const title = `Image Set ${dateStr}`;
     const readId = `images_${Date.now()}`;
+    const now = Date.now();
 
     const newRead = {
       id: readId,
       title: title,
+      createdAt: now,
+      updatedAt: now,
+      playlists: state.activePlaylistId && state.activePlaylistId !== 'all' ? [state.activePlaylistId] : [],
       pages: pages,
       pageCount: pages.length,
       isGitHub: false
     };
 
     state.reads.push(newRead);
+    saveLibraryToCache();
+    renderPlaylistTabs();
     updateLibraryUI();
-    saveLibraryOrder();
     loadRead(state.reads.length - 1);
     showLoading(false);
 
@@ -958,7 +1563,7 @@
       } catch (ghErr) {
         console.error('GitHub save error:', ghErr);
         const msg = getErrorMessage(ghErr);
-        alert(`"${newRead.title}" loaded into reader successfully! Cloud sync to GitHub encountered an issue: ${msg}. You can retry or edit from the library.`);
+        alert(`"${newRead.title}" loaded into reader successfully! Cloud sync to GitHub encountered an issue: ${msg}. You can retry or click "Resume Missing Pages" from the library.`);
       }
     }
   }
@@ -1145,10 +1750,39 @@
   }
 
   function updateNavUI() {
-    el.btnPrevRead.disabled = state.activeReadIndex <= 0;
-    el.btnNextRead.disabled = state.activeReadIndex >= state.reads.length - 1;
-    el.btnFooterPrev.disabled = state.activeReadIndex <= 0;
-    el.btnFooterNext.disabled = state.activeReadIndex >= state.reads.length - 1;
+    const visible = getVisibleReads();
+    const pos = state.currentRead ? visible.indexOf(state.currentRead) : -1;
+
+    const hasPrev = pos > 0;
+    const hasNext = pos >= 0 ? pos < visible.length - 1 : visible.length > 0;
+
+    el.btnPrevRead.disabled = !hasPrev;
+    el.btnNextRead.disabled = !hasNext;
+    el.btnFooterPrev.disabled = !hasPrev;
+    el.btnFooterNext.disabled = !hasNext;
+  }
+
+  function loadPrevRead() {
+    const visible = getVisibleReads();
+    if (visible.length === 0) return;
+    const pos = state.currentRead ? visible.indexOf(state.currentRead) : -1;
+    if (pos > 0) {
+      const realIdx = state.reads.indexOf(visible[pos - 1]);
+      if (realIdx >= 0) loadRead(realIdx);
+    }
+  }
+
+  function loadNextRead() {
+    const visible = getVisibleReads();
+    if (visible.length === 0) return;
+    const pos = state.currentRead ? visible.indexOf(state.currentRead) : -1;
+    if (pos >= 0 && pos < visible.length - 1) {
+      const realIdx = state.reads.indexOf(visible[pos + 1]);
+      if (realIdx >= 0) loadRead(realIdx);
+    } else if (pos === -1) {
+      const realIdx = state.reads.indexOf(visible[0]);
+      if (realIdx >= 0) loadRead(realIdx);
+    }
   }
 
   // --- EDIT ORDER MODE (FOR PAGES WITHIN ACTIVE READ) ---
@@ -1272,41 +1906,125 @@
     if (state.ghConnected && state.currentRead.isGitHub) {
       await updateManifestOnGitHub(state.currentRead.id, state.currentRead.pages.map(p => p.filename));
     }
+    saveLibraryToCache();
+    debouncedSyncLibrary();
 
     exitEditMode();
   }
 
-  // --- LIBRARY MODAL (WITH MANUAL REORDERING & DELETE) ---
+  // --- LIBRARY MODAL (WITH EFFORTLESS REORDERING, PLAYLISTS & DELETE) ---
   function updateLibraryUI() {
-    el.libraryCount.textContent = state.reads.length;
+    const visibleReads = getVisibleReads();
+    el.libraryCount.textContent = visibleReads.length;
     el.libraryGrid.innerHTML = '';
 
-    state.reads.forEach((read, idx) => {
+    if (visibleReads.length === 0) {
+      const emptyMsg = document.createElement('div');
+      emptyMsg.className = 'library-empty-msg';
+      emptyMsg.textContent = state.activePlaylistId === 'all'
+        ? 'No reads in library yet. Drop a ZIP or images to get started.'
+        : 'No reads in this playlist yet. Click "Playlists" on any read in "All" to assign it here.';
+      el.libraryGrid.appendChild(emptyMsg);
+      return;
+    }
+
+    visibleReads.forEach((read) => {
+      const idx = state.reads.indexOf(read);
+      const wrap = document.createElement('div');
+      wrap.className = 'library-card-wrap';
+
       const card = document.createElement('div');
       card.className = `library-card ${idx === state.activeReadIndex ? 'active-read' : ''}`;
       card.dataset.index = idx;
       card.draggable = true;
 
+      const missingInMem = read.pages.filter(p => !p.sha && p.blob).length;
+      const showResumeBtn = read.hasMissingPages || missingInMem > 0;
+
+      // Playlist badges on the card
+      const assignedPlaylists = (read.playlists || [])
+        .map(plId => state.playlists.find(p => p.id === plId))
+        .filter(Boolean);
+
+      const playlistTagsHtml = assignedPlaylists.length > 0
+        ? `<div class="library-playlist-tags">${assignedPlaylists.map(pl =>
+            `<span class="playlist-chip assigned" data-pl-id="${pl.id}" title="Click to remove from ${pl.name}">${pl.name} ✕</span>`
+          ).join('')}</div>`
+        : '';
+
       card.innerHTML = `
         <div class="library-drag-handle" title="Drag to reorder">⠿</div>
-        <div class="library-order-num">#${idx + 1}</div>
-        <div class="library-reorder-btns">
+        <div class="library-order-num" title="Click to jump to position">#${idx + 1}</div>
+        <div class="library-reorder-grid">
+          <button class="btn-reorder-arrow btn-lib-top" title="Move to Top (#1)" ${idx === 0 ? 'disabled' : ''}>⤒</button>
           <button class="btn-reorder-arrow btn-lib-up" title="Move Up" ${idx === 0 ? 'disabled' : ''}>▲</button>
+          <button class="btn-reorder-arrow btn-lib-bottom" title="Move to Bottom" ${idx === state.reads.length - 1 ? 'disabled' : ''}>⤓</button>
           <button class="btn-reorder-arrow btn-lib-down" title="Move Down" ${idx === state.reads.length - 1 ? 'disabled' : ''}>▼</button>
         </div>
         <img class="library-thumb" src="${read.pages[0]?.url || ''}" alt="">
         <div class="library-info">
           <div class="library-title">${read.title}</div>
-          <div class="library-sub">${read.pages.length} Pages ${read.isGitHub ? '• Saved on GitHub' : '• Local'}</div>
+          <div class="library-sub">${read.pages.length} Pages ${read.isGitHub ? '• Saved on GitHub' : '• Local'}${showResumeBtn ? ' • Incomplete' : ''}</div>
+          ${playlistTagsHtml}
         </div>
         <div class="library-actions">
+          ${showResumeBtn ? `<button class="library-btn library-btn-resume btn-resume-read" title="Resume uploading only missing pages">↻ Resume</button>` : ''}
+          <button class="library-btn btn-playlist-toggle" title="Assign to playlists">+ List</button>
           <button class="library-btn btn-edit-read" title="Edit read & replace images">Edit</button>
           <button class="library-btn btn-rename" title="Rename read">Rename</button>
           <button class="library-btn library-btn-danger btn-delete" title="Delete read">Delete</button>
         </div>
       `;
 
-      // Up / Down manual button moves
+      // Click position number (#) to type target position directly
+      const orderNumEl = card.querySelector('.library-order-num');
+      orderNumEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.min = '1';
+        input.max = String(state.reads.length);
+        input.value = String(idx + 1);
+        input.className = 'library-order-input';
+
+        orderNumEl.replaceWith(input);
+        input.focus();
+        input.select();
+
+        let committed = false;
+        const commitJump = () => {
+          if (committed) return;
+          committed = true;
+          const val = parseInt(input.value, 10);
+          if (!isNaN(val) && val >= 1 && val <= state.reads.length && val - 1 !== idx) {
+            moveLibraryItemTo(idx, val - 1);
+          } else {
+            updateLibraryUI();
+          }
+        };
+
+        input.addEventListener('click', (ev) => ev.stopPropagation());
+        input.addEventListener('keydown', (ev) => {
+          if (ev.key === 'Enter') {
+            ev.preventDefault();
+            commitJump();
+          } else if (ev.key === 'Escape') {
+            committed = true;
+            updateLibraryUI();
+          }
+        });
+        input.addEventListener('blur', commitJump);
+      });
+
+      // Top / Bottom / Up / Down manual button moves
+      card.querySelector('.btn-lib-top').addEventListener('click', (e) => {
+        e.stopPropagation();
+        moveLibraryItemTo(idx, 0);
+      });
+      card.querySelector('.btn-lib-bottom').addEventListener('click', (e) => {
+        e.stopPropagation();
+        moveLibraryItemTo(idx, state.reads.length - 1);
+      });
       card.querySelector('.btn-lib-up').addEventListener('click', (e) => {
         e.stopPropagation();
         moveLibraryItem(idx, -1);
@@ -1316,9 +2034,39 @@
         moveLibraryItem(idx, 1);
       });
 
+      // 1-click remove on playlist chips
+      card.querySelectorAll('.playlist-chip[data-pl-id]').forEach(chip => {
+        chip.addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleReadPlaylist(read.id, chip.dataset.plId);
+        });
+      });
+
+      // Toggle 1-click playlist assignment popover
+      card.querySelector('.btn-playlist-toggle').addEventListener('click', (e) => {
+        e.stopPropagation();
+        state.openPlaylistPopoverReadId = state.openPlaylistPopoverReadId === read.id ? null : read.id;
+        updateLibraryUI();
+      });
+
+      const resumeBtn = card.querySelector('.btn-resume-read');
+      if (resumeBtn) {
+        resumeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          resumeMissingPages(idx);
+        });
+      }
+
       // Card click to load read
       card.addEventListener('click', (e) => {
-        if (e.target.closest('.library-actions') || e.target.closest('.library-reorder-btns') || e.target.closest('.library-drag-handle')) return;
+        if (
+          e.target.closest('.library-actions') ||
+          e.target.closest('.library-reorder-grid') ||
+          e.target.closest('.library-drag-handle') ||
+          e.target.closest('.library-order-num') ||
+          e.target.closest('.library-order-input') ||
+          e.target.closest('.playlist-chip')
+        ) return;
         loadRead(idx);
         closeModal(el.modalLibrary);
       });
@@ -1345,7 +2093,46 @@
       card.addEventListener('drop', handleLibDrop);
       card.addEventListener('dragend', handleLibDragEnd);
 
-      el.libraryGrid.appendChild(card);
+      wrap.appendChild(card);
+
+      // 1-click playlist popover if open for this read
+      if (state.openPlaylistPopoverReadId === read.id) {
+        const popover = document.createElement('div');
+        popover.className = 'library-playlist-popover';
+        popover.innerHTML = `<span class="popover-label">Playlists:</span>`;
+
+        if (state.playlists.length === 0) {
+          const noneMsg = document.createElement('span');
+          noneMsg.className = 'popover-label';
+          noneMsg.textContent = 'None yet.';
+          popover.appendChild(noneMsg);
+        } else {
+          state.playlists.forEach(pl => {
+            const isAssigned = Array.isArray(read.playlists) && read.playlists.includes(pl.id);
+            const chip = document.createElement('button');
+            chip.className = `playlist-chip ${isAssigned ? 'assigned' : ''}`;
+            chip.textContent = `${isAssigned ? '✓' : '+'} ${pl.name}`;
+            chip.addEventListener('click', (e) => {
+              e.stopPropagation();
+              toggleReadPlaylist(read.id, pl.id);
+            });
+            popover.appendChild(chip);
+          });
+        }
+
+        const newBtn = document.createElement('button');
+        newBtn.className = 'playlist-chip';
+        newBtn.textContent = '+ New Playlist';
+        newBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          createPlaylist();
+        });
+        popover.appendChild(newBtn);
+
+        wrap.appendChild(popover);
+      }
+
+      el.libraryGrid.appendChild(wrap);
     });
   }
 
@@ -1357,20 +2144,11 @@
     e.preventDefault();
     this.classList.add('drag-over');
   }
-  async function handleLibDrop(e) {
+  function handleLibDrop(e) {
     e.stopPropagation();
     const dest = parseInt(this.dataset.index, 10);
     if (state.dragLibIndex !== null && state.dragLibIndex !== dest) {
-      const activeRead = state.reads[state.activeReadIndex];
-      const [moved] = state.reads.splice(state.dragLibIndex, 1);
-      state.reads.splice(dest, 0, moved);
-
-      if (activeRead) {
-        state.activeReadIndex = state.reads.findIndex(r => r === activeRead);
-      }
-      updateLibraryUI();
-      updateNavUI();
-      await saveLibraryOrder();
+      moveLibraryItemTo(state.dragLibIndex, dest);
     }
   }
   function handleLibDragEnd() {
@@ -1442,9 +2220,11 @@
       state.activeReadIndex--;
     }
 
+    saveLibraryToCache();
+    renderPlaylistTabs();
     updateLibraryUI();
     updateNavUI();
-    saveLibraryOrder();
+    debouncedSyncLibrary();
   }
 
   async function renameRead(idx) {
@@ -1456,6 +2236,7 @@
     if (!newTitle || newTitle.trim() === '' || newTitle.trim() === read.title) return;
 
     read.title = newTitle.trim();
+    read.updatedAt = Date.now();
 
     if (read.isGitHub && state.ghConnected) {
       await updateManifestOnGitHub(read.id, read.pages.map(p => p.filename));
@@ -1465,7 +2246,9 @@
       el.activeReadTitle.textContent = read.title;
     }
 
+    saveLibraryToCache();
     updateLibraryUI();
+    debouncedSyncLibrary();
   }
 
   // --- SAMPLE READ GENERATOR ---
@@ -1830,7 +2613,7 @@
 
   function handleEditorAppendFiles(fileList) {
     if (!fileList || fileList.length === 0) return;
-    const files = Array.from(fileList);
+    const files = Array.from(fileList).sort((a, b) => naturalCompare(a.name, b.name));
     files.forEach(file => {
       editorState.pages.push({
         id: 'p_app_' + Math.random().toString(36).substr(2, 6),
@@ -1854,7 +2637,7 @@
     const isCountChanged = editorState.pages.length !== initialCount;
 
     let msg = [];
-    if (modified > 0) msg.push(`${modified} page(s) replaced`);
+    if (modified > 0) msg.push(`${modified} page(s) modified/added`);
     if (isCountChanged) msg.push(`total pages: ${editorState.pages.length} (was ${initialCount})`);
 
     if (msg.length > 0) {
@@ -1866,9 +2649,109 @@
     }
   }
 
+  async function handleEditorResumeMissing(fileList) {
+    if (!fileList || fileList.length === 0) return;
+    const files = Array.from(fileList).sort((a, b) => naturalCompare(a.name, b.name));
+
+    showLoading(true, 'Scanning for missing pages...', 15, 'Comparing against existing pages');
+    const candidatePages = [];
+
+    try {
+      for (const file of files) {
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (['zip', 'cbz'].includes(ext)) {
+          const zip = new JSZip();
+          const loadedZip = await zip.loadAsync(file);
+          const entries = [];
+
+          loadedZip.forEach((relPath, entry) => {
+            const cleanPath = relPath.replace(/\\/g, '/');
+            const basename = cleanPath.split('/').pop().trim();
+            if (entry.dir ||
+                cleanPath.includes('__MACOSX') ||
+                basename.startsWith('.') ||
+                basename.startsWith('._') ||
+                basename.toLowerCase() === 'thumbs.db' ||
+                basename.toLowerCase() === 'desktop.ini') {
+              return;
+            }
+            const entryExt = basename.split('.').pop().toLowerCase();
+            if (IMAGE_EXTS.has(entryExt)) {
+              entries.push({ entry, basename });
+            }
+          });
+
+          entries.sort((a, b) => naturalCompare(a.basename, b.basename));
+
+          for (let i = 0; i < entries.length; i++) {
+            const { entry, basename } = entries[i];
+            const pct = Math.round(((i + 1) / entries.length) * 65) + 15;
+            updateLoading(`Checking ${i + 1} of ${entries.length}...`, pct, basename);
+            const mime = getMimeType(basename);
+            const buffer = await entry.async('arraybuffer');
+            if (buffer && buffer.byteLength > 10) {
+              const blob = new Blob([buffer], { type: mime });
+              candidatePages.push({ filename: basename, blob, size: blob.size });
+            }
+            if (i % 5 === 0) await sleep(5);
+          }
+        } else if (IMAGE_EXTS.has(ext)) {
+          candidatePages.push({ filename: file.name, blob: file, size: file.size });
+        }
+      }
+
+      const existingMap = new Map();
+      editorState.pages.forEach((p, idx) => existingMap.set(p.filename, { p, idx }));
+
+      let addedCount = 0;
+      let filledCount = 0;
+      candidatePages.forEach(cand => {
+        const existing = existingMap.get(cand.filename);
+        if (existing) {
+          if (!existing.p.sha) {
+            existing.p.blob = cand.blob;
+            existing.p.url = URL.createObjectURL(cand.blob);
+            existing.p.size = cand.size;
+            existing.p.isModified = true;
+            filledCount++;
+          }
+        } else {
+          editorState.pages.push({
+            id: 'p_res_' + Math.random().toString(36).substr(2, 6),
+            index: editorState.pages.length + 1,
+            filename: cand.filename,
+            url: URL.createObjectURL(cand.blob),
+            blob: cand.blob,
+            size: cand.size,
+            sha: null,
+            isModified: true
+          });
+          addedCount++;
+        }
+      });
+
+      // Re-sort combined pages naturally so missing pages land in their proper order
+      editorState.pages.sort((a, b) => naturalCompare(a.filename, b.filename));
+
+      showLoading(false);
+      renderEditorPages();
+      updateEditorChangesStatus();
+
+      const totalMissing = addedCount + filledCount;
+      if (totalMissing === 0) {
+        alert('All pages from the selected files are already present on GitHub!');
+      } else {
+        alert(`Found ${totalMissing} missing page(s). Click "Save Changes" to upload only the missing pages.`);
+      }
+    } catch (err) {
+      showLoading(false);
+      alert('Could not scan files for missing pages: ' + getErrorMessage(err));
+    }
+  }
+
   async function handleEditorZipUpload(fileList) {
     if (!fileList || fileList.length === 0) return;
-    const files = Array.from(fileList);
+    const files = Array.from(fileList).sort((a, b) => naturalCompare(a.name, b.name));
 
     showLoading(true, 'Processing replacement archive/images...', 20, 'Reading files');
 
@@ -1897,7 +2780,7 @@
             }
           });
 
-          entries.sort((a, b) => collator.compare(a.basename, b.basename));
+          entries.sort((a, b) => naturalCompare(a.basename, b.basename));
 
           for (let i = 0; i < entries.length; i++) {
             const { entry, basename } = entries[i];
@@ -1950,26 +2833,43 @@
     if (!targetRead) return;
 
     const hasGitHub = state.ghConnected && targetRead.isGitHub;
+    let remainingFailed = [];
 
     if (hasGitHub) {
       showLoading(true, `Saving changes to GitHub for "${targetRead.title}"...`, 10, 'Uploading modified pages...');
       const cleanPath = (state.ghConfig.path || 'reads').replace(/^\/|\/$/g, '');
-      const repo = state.ghConfig.repo;
-      const branch = state.ghConfig.branch || 'main';
+      const repo = state.ghConfig.repo.trim();
+      const branch = state.ghConfig.branch.trim() || 'main';
 
       try {
-        // 1. Concurrently upload any newly added or modified page blobs
+        // 1. Concurrently upload any newly added or modified page blobs (Pass 1)
         const pagesToUpload = editorState.pages.filter(p => p.blob && (!p.sha || p.isModified));
         if (pagesToUpload.length > 0) {
-          await uploadBlobsConcurrently(
+          const pass1 = await uploadBlobsConcurrently(
             pagesToUpload,
             repo,
-            5,
+            4,
             (curr, total, fn) => {
-              const pct = Math.round((curr / total) * 60) + 10;
+              const pct = Math.round((curr / total) * 55) + 10;
               updateLoading(`Uploading pages: ${curr} of ${total}...`, pct, fn);
             }
           );
+
+          // Pass 2 retry for any failed pages
+          remainingFailed = pass1.failedPages || [];
+          if (remainingFailed.length > 0) {
+            updateLoading(`2nd-pass retry for ${remainingFailed.length} failed page(s)...`, 68, 'Recovering...');
+            await sleep(2000);
+            const pass2 = await uploadBlobsConcurrently(
+              remainingFailed,
+              repo,
+              2,
+              (curr, total, fn) => {
+                updateLoading(`2nd-pass retry: ${curr} of ${total}...`, 70, fn);
+              }
+            );
+            remainingFailed = pass2.failedPages || [];
+          }
         }
 
         // 2. Fetch current branch head and base tree
@@ -1978,9 +2878,12 @@
 
         // 3. Prepare updated manifest blob
         updateLoading('Creating manifest blob...', 82, 'manifest.json');
+        targetRead.updatedAt = Date.now();
         const manifest = {
           title: targetRead.title,
-          updatedAt: Date.now(),
+          createdAt: targetRead.createdAt || targetRead.updatedAt,
+          updatedAt: targetRead.updatedAt,
+          playlists: Array.isArray(targetRead.playlists) ? targetRead.playlists : [],
           pages: editorState.pages.map((p, idx) => ({ filename: p.filename, order: idx + 1 }))
         };
         const manifestStr = JSON.stringify(manifest, null, 2);
@@ -1990,9 +2893,27 @@
           body: JSON.stringify({ content: manifestBase64, encoding: 'base64' })
         });
 
+        // Apply updated pages before building library_index.json
+        const previousPages = targetRead.pages || [];
+        targetRead.pages = editorState.pages.map((p, idx) => ({
+          index: idx + 1,
+          filename: p.filename,
+          url: p.url,
+          blob: p.blob || null,
+          size: p.size || 0,
+          sha: p.sha || null
+        }));
+        targetRead.pageCount = targetRead.pages.length;
+        targetRead.hasMissingPages = remainingFailed.length > 0;
+
+        const indexStr = JSON.stringify(buildLibraryIndexPayload(), null, 2);
+        const indexBlob = await ghRequest(`/repos/${repo}/git/blobs`, {
+          method: 'POST',
+          body: JSON.stringify({ content: btoa(unescape(encodeURIComponent(indexStr))), encoding: 'base64' })
+        });
+
         // 4. Build Git Tree items
         const treeItems = [];
-        // Add active pages
         editorState.pages.forEach(p => {
           if (p.sha) {
             treeItems.push({
@@ -2003,9 +2924,8 @@
             });
           }
         });
-        // Delete any original pages that were removed
         const activeFilenames = new Set(editorState.pages.map(p => p.filename));
-        (targetRead.pages || []).forEach(origP => {
+        previousPages.forEach(origP => {
           if (!activeFilenames.has(origP.filename)) {
             treeItems.push({
               path: `${cleanPath}/${targetRead.id}/${origP.filename}`,
@@ -2015,12 +2935,17 @@
             });
           }
         });
-        // Manifest entry
         treeItems.push({
           path: `${cleanPath}/${targetRead.id}/manifest.json`,
           mode: '100644',
           type: 'blob',
           sha: manifestBlob.sha
+        });
+        treeItems.push({
+          path: `${cleanPath}/library_index.json`,
+          mode: '100644',
+          type: 'blob',
+          sha: indexBlob.sha
         });
 
         // 5. Create Git Tree
@@ -2059,29 +2984,34 @@
         alert('Encountered issue while saving to GitHub: ' + getErrorMessage(ghErr));
         return;
       }
+    } else {
+      targetRead.pages = editorState.pages.map((p, idx) => ({
+        index: idx + 1,
+        filename: p.filename,
+        url: p.url,
+        blob: p.blob || null,
+        size: p.size || 0,
+        sha: p.sha || null
+      }));
+      targetRead.pageCount = targetRead.pages.length;
     }
 
-    targetRead.pages = editorState.pages.map((p, idx) => ({
-      index: idx + 1,
-      filename: p.filename,
-      url: p.url,
-      blob: p.blob || null,
-      size: p.size || 0,
-      sha: p.sha || null
-    }));
-    targetRead.pageCount = targetRead.pages.length;
-
+    saveLibraryToCache();
     showLoading(false);
     closeModal(el.modalReadEditor);
 
     if (state.activeReadIndex === editorState.readIndex) {
       state.currentRead = targetRead;
-      renderStrip();
+      renderActiveRead();
       updateNavUI();
     }
 
     updateLibraryUI();
-    alert(`Changes saved successfully for "${targetRead.title}" (${targetRead.pages.length} pages).`);
+    if (remainingFailed.length > 0) {
+      alert(`Saved with ${remainingFailed.length} failed page(s). Use "Resume Missing Pages" to retry only the remaining pages.`);
+    } else {
+      alert(`Changes saved successfully for "${targetRead.title}" (${targetRead.pages.length} pages).`);
+    }
   }
 
   // --- EVENT LISTENERS ---
@@ -2096,11 +3026,11 @@
 
     el.btnSampleRead.addEventListener('click', loadSampleRead);
 
-    // Read navigation
-    el.btnPrevRead.addEventListener('click', () => loadRead(state.activeReadIndex - 1));
-    el.btnNextRead.addEventListener('click', () => loadRead(state.activeReadIndex + 1));
-    el.btnFooterPrev.addEventListener('click', () => loadRead(state.activeReadIndex - 1));
-    el.btnFooterNext.addEventListener('click', () => loadRead(state.activeReadIndex + 1));
+    // Read navigation (respects active playlist)
+    el.btnPrevRead.addEventListener('click', loadPrevRead);
+    el.btnNextRead.addEventListener('click', loadNextRead);
+    el.btnFooterPrev.addEventListener('click', loadPrevRead);
+    el.btnFooterNext.addEventListener('click', loadNextRead);
     el.btnFooterTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
     if (el.btnFooterEdit) {
       el.btnFooterEdit.addEventListener('click', () => {
@@ -2111,9 +3041,20 @@
       el.btnFooterDelete.addEventListener('click', () => deleteRead(state.activeReadIndex));
     }
 
-    // Library
-    el.btnOpenShelf.addEventListener('click', () => openModal(el.modalLibrary));
-    el.btnLibrarySync.addEventListener('click', syncReadsFromGitHub);
+    // Library, Playlists & Sort Presets
+    el.btnOpenShelf.addEventListener('click', () => {
+      renderPlaylistTabs();
+      updateSortPresetUI();
+      updateLibraryUI();
+      openModal(el.modalLibrary);
+    });
+    el.btnLibrarySync.addEventListener('click', () => syncReadsFromGitHub({ silent: false }));
+    if (el.btnNewPlaylist) {
+      el.btnNewPlaylist.addEventListener('click', createPlaylist);
+    }
+    document.querySelectorAll('.sort-preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => applySortPreset(btn.dataset.sort));
+    });
 
     // Settings
     el.btnGithubStatus.addEventListener('click', () => openModal(el.modalSettings));
@@ -2215,6 +3156,13 @@
         el.inputEditorZip.value = '';
       });
     }
+    if (el.btnEditorResumeMissing && el.inputEditorResumeZip) {
+      el.btnEditorResumeMissing.addEventListener('click', () => el.inputEditorResumeZip.click());
+      el.inputEditorResumeZip.addEventListener('change', (e) => {
+        handleEditorResumeMissing(e.target.files);
+        el.inputEditorResumeZip.value = '';
+      });
+    }
     if (el.btnEditorAppendPage) {
       el.btnEditorAppendPage.addEventListener('click', () => el.inputSinglePageAppend.click());
     }
@@ -2248,8 +3196,8 @@
     // Global keyboard shortcuts
     window.addEventListener('keydown', (e) => {
       if (['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
-      if (e.key === '[') loadRead(state.activeReadIndex - 1);
-      if (e.key === ']') loadRead(state.activeReadIndex + 1);
+      if (e.key === '[') loadPrevRead();
+      if (e.key === ']') loadNextRead();
       if (e.key === 'h' || e.key === 'H') toggleMenuBar();
       if (e.key === 'Escape') {
         closeModal(el.modalSettings);
