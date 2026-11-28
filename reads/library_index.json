@@ -1,8 +1,10 @@
 {
   "version": 1,
-  "updatedAt": 1795881148798,
+  "updatedAt": 1795881209786,
   "sortMode": "custom",
   "order": [
+    "ochibure_downfall_ch_4",
+    "ochibure_downfall_ch_3",
     "kaki_hoshuu",
     "kaki_hoshuu_2",
     "kaki_hoshuu_3",
@@ -51,10 +53,8 @@
     "watashi_kirei_ch_1-3",
     "ochibure_downfall_ch_1",
     "ochibure_downfall_ch_2",
-    "ochibure_downfall_ch_4",
-    "ochibure_downfall_ch_6",
     "ochibure_downfall_ch_5",
-    "ochibure_downfall_ch_3",
+    "ochibure_downfall_ch_6",
     "wa_no_kuni_ni_sumou-tori_to_shite_sennyu_shite_shimatta_kokogaku-sha_the_archaeologist_who_has_infiltrated_the_wano_country_as_a_sumo_wrestler",
     "hontou_ni_ita_jikan_teishi_oji-san_3_he_was_here_the_time-stopper_ojisan_3",
     "orekko_haiboku",
@@ -81,6 +81,375 @@
   ],
   "playlists": [],
   "reads": [
+    {
+      "id": "ochibure_downfall_ch_4",
+      "title": "Ochibure _ Downfall Ch. 4",
+      "path": "reads/ochibure_downfall_ch_4",
+      "createdAt": 1795633517119,
+      "updatedAt": 1795633517119,
+      "playlists": [],
+      "isGitHub": true,
+      "hasMissingPages": false,
+      "pageCount": 25,
+      "pages": [
+        {
+          "index": 1,
+          "filename": "1.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/1.webp",
+          "size": 284304,
+          "sha": "3e36f513939afb23315d8d56319c0a5659058f22"
+        },
+        {
+          "index": 2,
+          "filename": "2.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/2.webp",
+          "size": 278704,
+          "sha": "a2ac3d723e880c23b3bf3d530556a161b66917e1"
+        },
+        {
+          "index": 3,
+          "filename": "3.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/3.webp",
+          "size": 385358,
+          "sha": "430791e30e0665d803ff7f5132b5b7c3b006f4c3"
+        },
+        {
+          "index": 4,
+          "filename": "4.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/4.webp",
+          "size": 310928,
+          "sha": "7e4a2ee5cdc1f453f5042bbb820b928bdb1d50a8"
+        },
+        {
+          "index": 5,
+          "filename": "5.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/5.webp",
+          "size": 302412,
+          "sha": "2e4ff68f9af1a6d624d029c84ffd0459afaf79e3"
+        },
+        {
+          "index": 6,
+          "filename": "6.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/6.webp",
+          "size": 334092,
+          "sha": "36f75c1aaf427a49398d1cd1940379de30a983ed"
+        },
+        {
+          "index": 7,
+          "filename": "7.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/7.webp",
+          "size": 346624,
+          "sha": "d923cc0e0b9ea0a9452d95da2aaf701757a0c043"
+        },
+        {
+          "index": 8,
+          "filename": "8.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/8.webp",
+          "size": 262832,
+          "sha": "ecfa386b62d24d4a98dbdf57cc07d1e7b65b6f1f"
+        },
+        {
+          "index": 9,
+          "filename": "9.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/9.webp",
+          "size": 343418,
+          "sha": "1033a53554f28e8fae099ac10ac0fedbf43cad75"
+        },
+        {
+          "index": 10,
+          "filename": "10.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/10.webp",
+          "size": 334510,
+          "sha": "8cc7e01e857b7ac939ca23531798bd11ed5cf775"
+        },
+        {
+          "index": 11,
+          "filename": "11.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/11.webp",
+          "size": 315136,
+          "sha": "674143793833f0ad6785ee8089b32523c6c04893"
+        },
+        {
+          "index": 12,
+          "filename": "12.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/12.webp",
+          "size": 324728,
+          "sha": "d413b83089bd9d7dd27e7f2932454642584c4dca"
+        },
+        {
+          "index": 13,
+          "filename": "13.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/13.webp",
+          "size": 322356,
+          "sha": "83a62927312621c2a9681d1670a4077f47d80ba7"
+        },
+        {
+          "index": 14,
+          "filename": "14.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/14.webp",
+          "size": 320596,
+          "sha": "6ab6bc916fd82dc70984efb0667260adb7e2acdc"
+        },
+        {
+          "index": 15,
+          "filename": "15.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/15.webp",
+          "size": 406224,
+          "sha": "9ea66a445195751248fb6c8dc8da3726e2b9d452"
+        },
+        {
+          "index": 16,
+          "filename": "16.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/16.webp",
+          "size": 307950,
+          "sha": "c7a1d576e69e5f74343d91e8dbcec612bf7eaeea"
+        },
+        {
+          "index": 17,
+          "filename": "17.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/17.webp",
+          "size": 308276,
+          "sha": "45d09c61c9a1d6cceda1e1458323c746e390c124"
+        },
+        {
+          "index": 18,
+          "filename": "18.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/18.webp",
+          "size": 333728,
+          "sha": "d20146a7feaeccadf9fa8624319e261e2be49d7b"
+        },
+        {
+          "index": 19,
+          "filename": "19.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/19.webp",
+          "size": 270456,
+          "sha": "5967cd284a72c9f5a56ab5edf7ac660a21f6d69a"
+        },
+        {
+          "index": 20,
+          "filename": "20.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/20.webp",
+          "size": 329558,
+          "sha": "c40bc058b14168d772a5793f20275390cfc40ad6"
+        },
+        {
+          "index": 21,
+          "filename": "21.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/21.jpg",
+          "size": 489723,
+          "sha": "cef25b60ed53ba8ab3fd8fb65a68df7b2217ad23"
+        },
+        {
+          "index": 22,
+          "filename": "22.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/22.webp",
+          "size": 272648,
+          "sha": "3dc5ec1bcf612a3f32f0a6fac5f801f8bd5aacf1"
+        },
+        {
+          "index": 23,
+          "filename": "23.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/23.webp",
+          "size": 302234,
+          "sha": "a47ad01d0617a5bd20905d4fa5bbfc81ec06acc7"
+        },
+        {
+          "index": 24,
+          "filename": "24.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/24.webp",
+          "size": 308940,
+          "sha": "9ad514c7dbcab3ac3237b9b83342f747c28264f6"
+        },
+        {
+          "index": 25,
+          "filename": "final.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/final.jpg",
+          "size": 59741,
+          "sha": "4379e350a1ef630bc73f13d5aff6d604eaecc1da"
+        }
+      ]
+    },
+    {
+      "id": "ochibure_downfall_ch_3",
+      "title": "Ochibure _ Downfall Ch. 3",
+      "path": "reads/ochibure_downfall_ch_3",
+      "createdAt": 1795639546780,
+      "updatedAt": 1795639546780,
+      "playlists": [],
+      "isGitHub": true,
+      "hasMissingPages": false,
+      "pageCount": 24,
+      "pages": [
+        {
+          "index": 1,
+          "filename": "1.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/1.webp",
+          "size": 349130,
+          "sha": "36230aeaae50ac5cde378afc342e0f9cffe999db"
+        },
+        {
+          "index": 2,
+          "filename": "2.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/2.webp",
+          "size": 346398,
+          "sha": "b93098da3a3a35abb9eb75f14cf87ad83ac877cc"
+        },
+        {
+          "index": 3,
+          "filename": "3.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/3.webp",
+          "size": 352410,
+          "sha": "d7dd30798b5dc0a4365d8ebaca23e27c610687ae"
+        },
+        {
+          "index": 4,
+          "filename": "4.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/4.webp",
+          "size": 331860,
+          "sha": "9629042043a65c173f0f9e359092ffcff3fbb211"
+        },
+        {
+          "index": 5,
+          "filename": "5.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/5.webp",
+          "size": 350080,
+          "sha": "81b9beb63bf50bf58077ac70f13f557a35d06c18"
+        },
+        {
+          "index": 6,
+          "filename": "6.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/6.webp",
+          "size": 311280,
+          "sha": "bfac4b8cc89c9da269515aa5d8fbda8827a42df3"
+        },
+        {
+          "index": 7,
+          "filename": "7.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/7.webp",
+          "size": 255616,
+          "sha": "d495eafca206e5fcf4df07a8ebf82bd2a8e75c43"
+        },
+        {
+          "index": 8,
+          "filename": "8.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/8.webp",
+          "size": 330840,
+          "sha": "420ea5fd697c34e186ba1f95b6ce9afebda7a78a"
+        },
+        {
+          "index": 9,
+          "filename": "9.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/9.webp",
+          "size": 321556,
+          "sha": "7cc1c07a0adbb984fdc726588a5347a244c9313f"
+        },
+        {
+          "index": 10,
+          "filename": "10.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/10.webp",
+          "size": 269504,
+          "sha": "72ad494294c57f62d1a441957a2970fb8ecc5916"
+        },
+        {
+          "index": 11,
+          "filename": "11.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/11.webp",
+          "size": 338162,
+          "sha": "7859d27dcbefcaac71bd2b09164a2947e6b3a3b3"
+        },
+        {
+          "index": 12,
+          "filename": "12.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/12.webp",
+          "size": 351098,
+          "sha": "40b7cfee2851296b61a88ed445e30bd2659e6dfa"
+        },
+        {
+          "index": 13,
+          "filename": "13.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/13.webp",
+          "size": 399540,
+          "sha": "a8ffbfea00ba5cab3ff138ce403e74d1ee96e43f"
+        },
+        {
+          "index": 14,
+          "filename": "14.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/14.webp",
+          "size": 317938,
+          "sha": "e76c7b524b51b5ec18c1d0b66c8fa4f7c8d211f7"
+        },
+        {
+          "index": 15,
+          "filename": "15.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/15.webp",
+          "size": 286332,
+          "sha": "d467a476f54c2eb9314ab7a14a5c877d357b2e57"
+        },
+        {
+          "index": 16,
+          "filename": "16.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/16.webp",
+          "size": 338210,
+          "sha": "a5da0fe99e05332ad1e40231ee3fcd11029a1bf4"
+        },
+        {
+          "index": 17,
+          "filename": "17.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/17.webp",
+          "size": 295560,
+          "sha": "5955eff81878889ddf87c6ee0b6bc92210109944"
+        },
+        {
+          "index": 18,
+          "filename": "18.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/18.webp",
+          "size": 308492,
+          "sha": "1ad72a76daf2b6a905618db0b3a24da6f92358dd"
+        },
+        {
+          "index": 19,
+          "filename": "19.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/19.webp",
+          "size": 341398,
+          "sha": "6f3b059ccc4ffdf3f68c5aa9102f626f30472a8b"
+        },
+        {
+          "index": 20,
+          "filename": "20.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/20.webp",
+          "size": 310650,
+          "sha": "bf02e7ae65086d9edd0085be7d5151335ef1a599"
+        },
+        {
+          "index": 21,
+          "filename": "21.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/21.jpg",
+          "size": 540236,
+          "sha": "bb5000a90f80df8d1990b8e1523470376e175613"
+        },
+        {
+          "index": 22,
+          "filename": "22.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/22.webp",
+          "size": 423562,
+          "sha": "2d14e31aa504c6ff46c0f96ac83906d60c8491c2"
+        },
+        {
+          "index": 23,
+          "filename": "23.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/23.webp",
+          "size": 247920,
+          "sha": "c939453b12dfef36763512a0851f267897264bae"
+        },
+        {
+          "index": 24,
+          "filename": "final.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/final.jpg",
+          "size": 59741,
+          "sha": "4379e350a1ef630bc73f13d5aff6d604eaecc1da"
+        }
+      ]
+    },
     {
       "id": "kaki_hoshuu",
       "title": "Kaki Hoshuu",
@@ -28909,188 +29278,167 @@
       ]
     },
     {
-      "id": "ochibure_downfall_ch_4",
-      "title": "Ochibure _ Downfall Ch. 4",
-      "path": "reads/ochibure_downfall_ch_4",
-      "createdAt": 1795633517119,
-      "updatedAt": 1795633517119,
+      "id": "ochibure_downfall_ch_5",
+      "title": "Ochibure _ Downfall Ch. 5",
+      "path": "reads/ochibure_downfall_ch_5",
+      "createdAt": 1795639296279,
+      "updatedAt": 1795639296279,
       "playlists": [],
       "isGitHub": true,
       "hasMissingPages": false,
-      "pageCount": 25,
+      "pageCount": 22,
       "pages": [
         {
           "index": 1,
           "filename": "1.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/1.webp",
-          "size": 284304,
-          "sha": "3e36f513939afb23315d8d56319c0a5659058f22"
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/1.webp",
+          "size": 295122,
+          "sha": "63b0422e3bbcd3d66dcdb1ebe445217e97e74423"
         },
         {
           "index": 2,
           "filename": "2.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/2.webp",
-          "size": 278704,
-          "sha": "a2ac3d723e880c23b3bf3d530556a161b66917e1"
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/2.webp",
+          "size": 314672,
+          "sha": "994723f064674ddf3f3857e7966730e5d2d80835"
         },
         {
           "index": 3,
           "filename": "3.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/3.webp",
-          "size": 385358,
-          "sha": "430791e30e0665d803ff7f5132b5b7c3b006f4c3"
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/3.webp",
+          "size": 340598,
+          "sha": "95ca5cd3c7160b02e82f222b8cdff088e3b0ee5b"
         },
         {
           "index": 4,
           "filename": "4.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/4.webp",
-          "size": 310928,
-          "sha": "7e4a2ee5cdc1f453f5042bbb820b928bdb1d50a8"
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/4.webp",
+          "size": 338906,
+          "sha": "9747a3b6e5f4f36509e514c5c746fe8e9ce18107"
         },
         {
           "index": 5,
           "filename": "5.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/5.webp",
-          "size": 302412,
-          "sha": "2e4ff68f9af1a6d624d029c84ffd0459afaf79e3"
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/5.webp",
+          "size": 321344,
+          "sha": "00c99068dc0771f6a6aa525645506a6d0e0d7c03"
         },
         {
           "index": 6,
           "filename": "6.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/6.webp",
-          "size": 334092,
-          "sha": "36f75c1aaf427a49398d1cd1940379de30a983ed"
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/6.webp",
+          "size": 353576,
+          "sha": "240f92ff7e0b3c4a1079ed1d1cd6e06fccd716d9"
         },
         {
           "index": 7,
           "filename": "7.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/7.webp",
-          "size": 346624,
-          "sha": "d923cc0e0b9ea0a9452d95da2aaf701757a0c043"
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/7.webp",
+          "size": 331646,
+          "sha": "daed99847f10af2520669fe430a704eda9f2e5c8"
         },
         {
           "index": 8,
           "filename": "8.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/8.webp",
-          "size": 262832,
-          "sha": "ecfa386b62d24d4a98dbdf57cc07d1e7b65b6f1f"
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/8.webp",
+          "size": 310726,
+          "sha": "2d31c8f81487766f0b2e95abd8fb4b1d125e6ee4"
         },
         {
           "index": 9,
           "filename": "9.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/9.webp",
-          "size": 343418,
-          "sha": "1033a53554f28e8fae099ac10ac0fedbf43cad75"
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/9.webp",
+          "size": 330802,
+          "sha": "ad46eb87394d3110148bf33b4453933b636a8c1e"
         },
         {
           "index": 10,
           "filename": "10.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/10.webp",
-          "size": 334510,
-          "sha": "8cc7e01e857b7ac939ca23531798bd11ed5cf775"
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/10.webp",
+          "size": 313492,
+          "sha": "1d54f518d02c69af87bf0ad79bbf8d6016021db4"
         },
         {
           "index": 11,
           "filename": "11.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/11.webp",
-          "size": 315136,
-          "sha": "674143793833f0ad6785ee8089b32523c6c04893"
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/11.webp",
+          "size": 306166,
+          "sha": "0880af4706d34f34cdd8666e46bd66d3a07aa2e3"
         },
         {
           "index": 12,
           "filename": "12.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/12.webp",
-          "size": 324728,
-          "sha": "d413b83089bd9d7dd27e7f2932454642584c4dca"
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/12.webp",
+          "size": 354812,
+          "sha": "bf58862ec3379205060cf8b7b8a36f0ac7dd746c"
         },
         {
           "index": 13,
           "filename": "13.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/13.webp",
-          "size": 322356,
-          "sha": "83a62927312621c2a9681d1670a4077f47d80ba7"
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/13.webp",
+          "size": 278504,
+          "sha": "a212f36518b3d26400b938ab81aaa1ae7fdfd81d"
         },
         {
           "index": 14,
           "filename": "14.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/14.webp",
-          "size": 320596,
-          "sha": "6ab6bc916fd82dc70984efb0667260adb7e2acdc"
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/14.webp",
+          "size": 334730,
+          "sha": "db15a53d066766cd52e4c8e52f79d452a10d7db2"
         },
         {
           "index": 15,
           "filename": "15.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/15.webp",
-          "size": 406224,
-          "sha": "9ea66a445195751248fb6c8dc8da3726e2b9d452"
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/15.webp",
+          "size": 300674,
+          "sha": "a337e99ec00b40a5e205f08b46cc2d35b24c037a"
         },
         {
           "index": 16,
           "filename": "16.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/16.webp",
-          "size": 307950,
-          "sha": "c7a1d576e69e5f74343d91e8dbcec612bf7eaeea"
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/16.webp",
+          "size": 366432,
+          "sha": "3aca73687fe3d8b1f1a10da223f7fae0c61781cc"
         },
         {
           "index": 17,
           "filename": "17.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/17.webp",
-          "size": 308276,
-          "sha": "45d09c61c9a1d6cceda1e1458323c746e390c124"
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/17.webp",
+          "size": 310976,
+          "sha": "3b03999401aa5b46d140d5436d2d8684589499fd"
         },
         {
           "index": 18,
           "filename": "18.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/18.webp",
-          "size": 333728,
-          "sha": "d20146a7feaeccadf9fa8624319e261e2be49d7b"
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/18.webp",
+          "size": 322606,
+          "sha": "3fbba4052d0ac0c1e6d9a5a7aebe482323fbdb92"
         },
         {
           "index": 19,
           "filename": "19.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/19.webp",
-          "size": 270456,
-          "sha": "5967cd284a72c9f5a56ab5edf7ac660a21f6d69a"
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/19.webp",
+          "size": 179360,
+          "sha": "acce200860b58455d251fcd1961cf5fa2c8ac1a5"
         },
         {
           "index": 20,
           "filename": "20.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/20.webp",
-          "size": 329558,
-          "sha": "c40bc058b14168d772a5793f20275390cfc40ad6"
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/20.webp",
+          "size": 344276,
+          "sha": "a1539ec744ae732b4f72b635bcb720ee2b4e3f2e"
         },
         {
           "index": 21,
-          "filename": "21.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/21.jpg",
-          "size": 489723,
-          "sha": "cef25b60ed53ba8ab3fd8fb65a68df7b2217ad23"
+          "filename": "21.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/21.webp",
+          "size": 337596,
+          "sha": "2d9e4959eba499e35f66f99b1ca7c4278c73a270"
         },
         {
           "index": 22,
-          "filename": "22.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/22.webp",
-          "size": 272648,
-          "sha": "3dc5ec1bcf612a3f32f0a6fac5f801f8bd5aacf1"
-        },
-        {
-          "index": 23,
-          "filename": "23.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/23.webp",
-          "size": 302234,
-          "sha": "a47ad01d0617a5bd20905d4fa5bbfc81ec06acc7"
-        },
-        {
-          "index": 24,
-          "filename": "24.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/24.webp",
-          "size": 308940,
-          "sha": "9ad514c7dbcab3ac3237b9b83342f747c28264f6"
-        },
-        {
-          "index": 25,
           "filename": "final.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_4/final.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/final.jpg",
           "size": 59741,
           "sha": "4379e350a1ef630bc73f13d5aff6d604eaecc1da"
         }
@@ -29272,354 +29620,6 @@
           "index": 24,
           "filename": "final.jpg",
           "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_6/final.jpg",
-          "size": 59741,
-          "sha": "4379e350a1ef630bc73f13d5aff6d604eaecc1da"
-        }
-      ]
-    },
-    {
-      "id": "ochibure_downfall_ch_5",
-      "title": "Ochibure _ Downfall Ch. 5",
-      "path": "reads/ochibure_downfall_ch_5",
-      "createdAt": 1795639296279,
-      "updatedAt": 1795639296279,
-      "playlists": [],
-      "isGitHub": true,
-      "hasMissingPages": false,
-      "pageCount": 22,
-      "pages": [
-        {
-          "index": 1,
-          "filename": "1.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/1.webp",
-          "size": 295122,
-          "sha": "63b0422e3bbcd3d66dcdb1ebe445217e97e74423"
-        },
-        {
-          "index": 2,
-          "filename": "2.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/2.webp",
-          "size": 314672,
-          "sha": "994723f064674ddf3f3857e7966730e5d2d80835"
-        },
-        {
-          "index": 3,
-          "filename": "3.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/3.webp",
-          "size": 340598,
-          "sha": "95ca5cd3c7160b02e82f222b8cdff088e3b0ee5b"
-        },
-        {
-          "index": 4,
-          "filename": "4.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/4.webp",
-          "size": 338906,
-          "sha": "9747a3b6e5f4f36509e514c5c746fe8e9ce18107"
-        },
-        {
-          "index": 5,
-          "filename": "5.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/5.webp",
-          "size": 321344,
-          "sha": "00c99068dc0771f6a6aa525645506a6d0e0d7c03"
-        },
-        {
-          "index": 6,
-          "filename": "6.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/6.webp",
-          "size": 353576,
-          "sha": "240f92ff7e0b3c4a1079ed1d1cd6e06fccd716d9"
-        },
-        {
-          "index": 7,
-          "filename": "7.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/7.webp",
-          "size": 331646,
-          "sha": "daed99847f10af2520669fe430a704eda9f2e5c8"
-        },
-        {
-          "index": 8,
-          "filename": "8.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/8.webp",
-          "size": 310726,
-          "sha": "2d31c8f81487766f0b2e95abd8fb4b1d125e6ee4"
-        },
-        {
-          "index": 9,
-          "filename": "9.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/9.webp",
-          "size": 330802,
-          "sha": "ad46eb87394d3110148bf33b4453933b636a8c1e"
-        },
-        {
-          "index": 10,
-          "filename": "10.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/10.webp",
-          "size": 313492,
-          "sha": "1d54f518d02c69af87bf0ad79bbf8d6016021db4"
-        },
-        {
-          "index": 11,
-          "filename": "11.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/11.webp",
-          "size": 306166,
-          "sha": "0880af4706d34f34cdd8666e46bd66d3a07aa2e3"
-        },
-        {
-          "index": 12,
-          "filename": "12.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/12.webp",
-          "size": 354812,
-          "sha": "bf58862ec3379205060cf8b7b8a36f0ac7dd746c"
-        },
-        {
-          "index": 13,
-          "filename": "13.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/13.webp",
-          "size": 278504,
-          "sha": "a212f36518b3d26400b938ab81aaa1ae7fdfd81d"
-        },
-        {
-          "index": 14,
-          "filename": "14.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/14.webp",
-          "size": 334730,
-          "sha": "db15a53d066766cd52e4c8e52f79d452a10d7db2"
-        },
-        {
-          "index": 15,
-          "filename": "15.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/15.webp",
-          "size": 300674,
-          "sha": "a337e99ec00b40a5e205f08b46cc2d35b24c037a"
-        },
-        {
-          "index": 16,
-          "filename": "16.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/16.webp",
-          "size": 366432,
-          "sha": "3aca73687fe3d8b1f1a10da223f7fae0c61781cc"
-        },
-        {
-          "index": 17,
-          "filename": "17.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/17.webp",
-          "size": 310976,
-          "sha": "3b03999401aa5b46d140d5436d2d8684589499fd"
-        },
-        {
-          "index": 18,
-          "filename": "18.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/18.webp",
-          "size": 322606,
-          "sha": "3fbba4052d0ac0c1e6d9a5a7aebe482323fbdb92"
-        },
-        {
-          "index": 19,
-          "filename": "19.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/19.webp",
-          "size": 179360,
-          "sha": "acce200860b58455d251fcd1961cf5fa2c8ac1a5"
-        },
-        {
-          "index": 20,
-          "filename": "20.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/20.webp",
-          "size": 344276,
-          "sha": "a1539ec744ae732b4f72b635bcb720ee2b4e3f2e"
-        },
-        {
-          "index": 21,
-          "filename": "21.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/21.webp",
-          "size": 337596,
-          "sha": "2d9e4959eba499e35f66f99b1ca7c4278c73a270"
-        },
-        {
-          "index": 22,
-          "filename": "final.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_5/final.jpg",
-          "size": 59741,
-          "sha": "4379e350a1ef630bc73f13d5aff6d604eaecc1da"
-        }
-      ]
-    },
-    {
-      "id": "ochibure_downfall_ch_3",
-      "title": "Ochibure _ Downfall Ch. 3",
-      "path": "reads/ochibure_downfall_ch_3",
-      "createdAt": 1795639546780,
-      "updatedAt": 1795639546780,
-      "playlists": [],
-      "isGitHub": true,
-      "hasMissingPages": false,
-      "pageCount": 24,
-      "pages": [
-        {
-          "index": 1,
-          "filename": "1.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/1.webp",
-          "size": 349130,
-          "sha": "36230aeaae50ac5cde378afc342e0f9cffe999db"
-        },
-        {
-          "index": 2,
-          "filename": "2.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/2.webp",
-          "size": 346398,
-          "sha": "b93098da3a3a35abb9eb75f14cf87ad83ac877cc"
-        },
-        {
-          "index": 3,
-          "filename": "3.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/3.webp",
-          "size": 352410,
-          "sha": "d7dd30798b5dc0a4365d8ebaca23e27c610687ae"
-        },
-        {
-          "index": 4,
-          "filename": "4.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/4.webp",
-          "size": 331860,
-          "sha": "9629042043a65c173f0f9e359092ffcff3fbb211"
-        },
-        {
-          "index": 5,
-          "filename": "5.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/5.webp",
-          "size": 350080,
-          "sha": "81b9beb63bf50bf58077ac70f13f557a35d06c18"
-        },
-        {
-          "index": 6,
-          "filename": "6.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/6.webp",
-          "size": 311280,
-          "sha": "bfac4b8cc89c9da269515aa5d8fbda8827a42df3"
-        },
-        {
-          "index": 7,
-          "filename": "7.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/7.webp",
-          "size": 255616,
-          "sha": "d495eafca206e5fcf4df07a8ebf82bd2a8e75c43"
-        },
-        {
-          "index": 8,
-          "filename": "8.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/8.webp",
-          "size": 330840,
-          "sha": "420ea5fd697c34e186ba1f95b6ce9afebda7a78a"
-        },
-        {
-          "index": 9,
-          "filename": "9.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/9.webp",
-          "size": 321556,
-          "sha": "7cc1c07a0adbb984fdc726588a5347a244c9313f"
-        },
-        {
-          "index": 10,
-          "filename": "10.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/10.webp",
-          "size": 269504,
-          "sha": "72ad494294c57f62d1a441957a2970fb8ecc5916"
-        },
-        {
-          "index": 11,
-          "filename": "11.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/11.webp",
-          "size": 338162,
-          "sha": "7859d27dcbefcaac71bd2b09164a2947e6b3a3b3"
-        },
-        {
-          "index": 12,
-          "filename": "12.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/12.webp",
-          "size": 351098,
-          "sha": "40b7cfee2851296b61a88ed445e30bd2659e6dfa"
-        },
-        {
-          "index": 13,
-          "filename": "13.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/13.webp",
-          "size": 399540,
-          "sha": "a8ffbfea00ba5cab3ff138ce403e74d1ee96e43f"
-        },
-        {
-          "index": 14,
-          "filename": "14.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/14.webp",
-          "size": 317938,
-          "sha": "e76c7b524b51b5ec18c1d0b66c8fa4f7c8d211f7"
-        },
-        {
-          "index": 15,
-          "filename": "15.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/15.webp",
-          "size": 286332,
-          "sha": "d467a476f54c2eb9314ab7a14a5c877d357b2e57"
-        },
-        {
-          "index": 16,
-          "filename": "16.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/16.webp",
-          "size": 338210,
-          "sha": "a5da0fe99e05332ad1e40231ee3fcd11029a1bf4"
-        },
-        {
-          "index": 17,
-          "filename": "17.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/17.webp",
-          "size": 295560,
-          "sha": "5955eff81878889ddf87c6ee0b6bc92210109944"
-        },
-        {
-          "index": 18,
-          "filename": "18.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/18.webp",
-          "size": 308492,
-          "sha": "1ad72a76daf2b6a905618db0b3a24da6f92358dd"
-        },
-        {
-          "index": 19,
-          "filename": "19.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/19.webp",
-          "size": 341398,
-          "sha": "6f3b059ccc4ffdf3f68c5aa9102f626f30472a8b"
-        },
-        {
-          "index": 20,
-          "filename": "20.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/20.webp",
-          "size": 310650,
-          "sha": "bf02e7ae65086d9edd0085be7d5151335ef1a599"
-        },
-        {
-          "index": 21,
-          "filename": "21.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/21.jpg",
-          "size": 540236,
-          "sha": "bb5000a90f80df8d1990b8e1523470376e175613"
-        },
-        {
-          "index": 22,
-          "filename": "22.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/22.webp",
-          "size": 423562,
-          "sha": "2d14e31aa504c6ff46c0f96ac83906d60c8491c2"
-        },
-        {
-          "index": 23,
-          "filename": "23.webp",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/23.webp",
-          "size": 247920,
-          "sha": "c939453b12dfef36763512a0851f267897264bae"
-        },
-        {
-          "index": 24,
-          "filename": "final.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/ochibure_downfall_ch_3/final.jpg",
           "size": 59741,
           "sha": "4379e350a1ef630bc73f13d5aff6d604eaecc1da"
         }
