@@ -1,7 +1,6 @@
 {
   "order": [
     "ochibure_downfall_ch_4",
-    "ochibure_downfall_ch_3",
     "kaki_hoshuu",
     "kaki_hoshuu_2",
     "kaki_hoshuu_3",
@@ -50,6 +49,7 @@
     "watashi_kirei_ch_1-3",
     "ochibure_downfall_ch_1",
     "ochibure_downfall_ch_2",
+    "ochibure_downfall_ch_3",
     "ochibure_downfall_ch_5",
     "ochibure_downfall_ch_6",
     "wa_no_kuni_ni_sumou-tori_to_shite_sennyu_shite_shimatta_kokogaku-sha_the_archaeologist_who_has_infiltrated_the_wano_country_as_a_sumo_wrestler",
@@ -78,5 +78,5 @@
   ],
   "playlists": [],
   "readPlaylists": {},
-  "updatedAt": 1795881209786
+  "updatedAt": 1795881274044
 }
