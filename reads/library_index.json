@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": 1795880572785,
+  "updatedAt": 1795880905329,
   "sortMode": "custom",
   "order": [
     "kaki_hoshuu",
@@ -29590,11 +29590,11 @@
       "title": "Hontou ni Ita!! Jikan Teishi Oji-san 3 _ He Was Here!! The Time-Stopper Ojisan 3",
       "path": "reads/hontou_ni_ita_jikan_teishi_oji-san_3_he_was_here_the_time-stopper_ojisan_3",
       "createdAt": 1795635161806,
-      "updatedAt": 1795635161806,
+      "updatedAt": 1795880904717,
       "playlists": [],
       "isGitHub": true,
       "hasMissingPages": false,
-      "pageCount": 15,
+      "pageCount": 33,
       "pages": [
         {
           "index": 1,
@@ -29682,24 +29682,150 @@
         },
         {
           "index": 13,
+          "filename": "13.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/hontou_ni_ita_jikan_teishi_oji-san_3_he_was_here_the_time-stopper_ojisan_3/13.webp",
+          "size": 578582,
+          "sha": "750072b33f5ea16e12e321775cf65f7cd59ff9ce"
+        },
+        {
+          "index": 14,
+          "filename": "14.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/hontou_ni_ita_jikan_teishi_oji-san_3_he_was_here_the_time-stopper_ojisan_3/14.webp",
+          "size": 666198,
+          "sha": "4206281778bb3968cdb51f2cbf18664a33c44dc2"
+        },
+        {
+          "index": 15,
+          "filename": "15.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/hontou_ni_ita_jikan_teishi_oji-san_3_he_was_here_the_time-stopper_ojisan_3/15.webp",
+          "size": 571054,
+          "sha": "9aef0b412722504bd2715350a5acd22d62f0c585"
+        },
+        {
+          "index": 16,
+          "filename": "16.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/hontou_ni_ita_jikan_teishi_oji-san_3_he_was_here_the_time-stopper_ojisan_3/16.webp",
+          "size": 576210,
+          "sha": "8ffa9ba986b023b217b7fcc9c6c37908bc1d9262"
+        },
+        {
+          "index": 17,
+          "filename": "17.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/hontou_ni_ita_jikan_teishi_oji-san_3_he_was_here_the_time-stopper_ojisan_3/17.webp",
+          "size": 613374,
+          "sha": "78e7e6947bdaf8b984d4fd1a75700fc9fd599f49"
+        },
+        {
+          "index": 18,
+          "filename": "18.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/hontou_ni_ita_jikan_teishi_oji-san_3_he_was_here_the_time-stopper_ojisan_3/18.webp",
+          "size": 747216,
+          "sha": "43b9c9faef483788473882c2514b26b5c22886b0"
+        },
+        {
+          "index": 19,
+          "filename": "19.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/hontou_ni_ita_jikan_teishi_oji-san_3_he_was_here_the_time-stopper_ojisan_3/19.webp",
+          "size": 662060,
+          "sha": "ca5ae8a09dcece130eab6a648f90351defa2ea10"
+        },
+        {
+          "index": 20,
+          "filename": "20.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/hontou_ni_ita_jikan_teishi_oji-san_3_he_was_here_the_time-stopper_ojisan_3/20.webp",
+          "size": 595740,
+          "sha": "07362e8d533bd185ed37cac2fa2b6b46f66563eb"
+        },
+        {
+          "index": 21,
+          "filename": "21.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/hontou_ni_ita_jikan_teishi_oji-san_3_he_was_here_the_time-stopper_ojisan_3/21.webp",
+          "size": 560760,
+          "sha": "3cad31e645e5061066ad89acb5e39c5307d2c349"
+        },
+        {
+          "index": 22,
+          "filename": "22.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/hontou_ni_ita_jikan_teishi_oji-san_3_he_was_here_the_time-stopper_ojisan_3/22.webp",
+          "size": 747596,
+          "sha": "a1e74107f39514ee862c4d0340f2ac4a263f6124"
+        },
+        {
+          "index": 23,
+          "filename": "23.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/hontou_ni_ita_jikan_teishi_oji-san_3_he_was_here_the_time-stopper_ojisan_3/23.webp",
+          "size": 620726,
+          "sha": "67157ca632026e36b4409570e4aba07445e06af8"
+        },
+        {
+          "index": 24,
+          "filename": "24.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/hontou_ni_ita_jikan_teishi_oji-san_3_he_was_here_the_time-stopper_ojisan_3/24.webp",
+          "size": 601162,
+          "sha": "29b761d64d662b6a2a27f330ee2489b623c3d271"
+        },
+        {
+          "index": 25,
+          "filename": "25.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/hontou_ni_ita_jikan_teishi_oji-san_3_he_was_here_the_time-stopper_ojisan_3/25.webp",
+          "size": 710558,
+          "sha": "527eb14555f2590d528936f21818cb35bde6ede9"
+        },
+        {
+          "index": 26,
+          "filename": "26.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/hontou_ni_ita_jikan_teishi_oji-san_3_he_was_here_the_time-stopper_ojisan_3/26.webp",
+          "size": 558312,
+          "sha": "00ff8b97eb0ae5feea2cece0735138a43903163f"
+        },
+        {
+          "index": 27,
+          "filename": "27.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/hontou_ni_ita_jikan_teishi_oji-san_3_he_was_here_the_time-stopper_ojisan_3/27.webp",
+          "size": 570470,
+          "sha": "dea1548e9f208dfa0eb49333d0557e2189a7998d"
+        },
+        {
+          "index": 28,
           "filename": "28.webp",
           "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/hontou_ni_ita_jikan_teishi_oji-san_3_he_was_here_the_time-stopper_ojisan_3/28.webp",
           "size": 68592,
           "sha": "6f30c0dbe4555d0bd39692a170943c6a53f19624"
         },
         {
-          "index": 14,
+          "index": 29,
           "filename": "29.webp",
           "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/hontou_ni_ita_jikan_teishi_oji-san_3_he_was_here_the_time-stopper_ojisan_3/29.webp",
           "size": 18114,
           "sha": "51fd24db57a16621481b1267e2768fc5335f112f"
         },
         {
-          "index": 15,
+          "index": 30,
           "filename": "30.webp",
           "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/hontou_ni_ita_jikan_teishi_oji-san_3_he_was_here_the_time-stopper_ojisan_3/30.webp",
           "size": 154092,
           "sha": "55e1e509e66153f8624aa5682babbb2286e97f9d"
+        },
+        {
+          "index": 31,
+          "filename": "31.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/hontou_ni_ita_jikan_teishi_oji-san_3_he_was_here_the_time-stopper_ojisan_3/31.webp",
+          "size": 174526,
+          "sha": "bdd4eb94f87fbd27c8b4bf266fd56c45cd4cbec5"
+        },
+        {
+          "index": 32,
+          "filename": "32.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/hontou_ni_ita_jikan_teishi_oji-san_3_he_was_here_the_time-stopper_ojisan_3/32.webp",
+          "size": 170906,
+          "sha": "e3f8d4fe7e6613214dda75af366d2844a4783469"
+        },
+        {
+          "index": 33,
+          "filename": "final.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/hontou_ni_ita_jikan_teishi_oji-san_3_he_was_here_the_time-stopper_ojisan_3/final.jpg",
+          "size": 59741,
+          "sha": "4379e350a1ef630bc73f13d5aff6d604eaecc1da"
         }
       ]
     },
