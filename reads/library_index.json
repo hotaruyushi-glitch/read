@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": 1795883902761,
+  "updatedAt": 1795884133247,
   "sortMode": "custom",
   "order": [
     "kaki_hoshuu",
@@ -83,7 +83,8 @@
     "joshi_volley-bu_jk_netorareru_2",
     "tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sorekara_",
     "images_1795883652113",
-    "images_1795883885028"
+    "images_1795883885028",
+    "images_1795884109094"
   ],
   "playlists": [],
   "reads": [
@@ -40706,6 +40707,453 @@
           "index": 34,
           "filename": "final.jpg",
           "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795883885028/final.jpg",
+          "size": 59741,
+          "sha": "4379e350a1ef630bc73f13d5aff6d604eaecc1da"
+        }
+      ]
+    },
+    {
+      "id": "images_1795884109094",
+      "title": "Image Set 2026-11-28",
+      "path": "reads/images_1795884109094",
+      "createdAt": 1795884109094,
+      "updatedAt": 1795884132103,
+      "playlists": [],
+      "isGitHub": true,
+      "hasMissingPages": false,
+      "pageCount": 62,
+      "pages": [
+        {
+          "index": 1,
+          "filename": "1.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/1.webp",
+          "size": 128836,
+          "sha": "242111cc76794400315c3620b103c4e6155bbbb5"
+        },
+        {
+          "index": 2,
+          "filename": "2.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/2.webp",
+          "size": 224882,
+          "sha": "57bfc540270e5079765c2cc800692b12da68b9ff"
+        },
+        {
+          "index": 3,
+          "filename": "3.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/3.webp",
+          "size": 120924,
+          "sha": "b329f5eb7bab8e5bcee6f248e29bdde78a1c72cd"
+        },
+        {
+          "index": 4,
+          "filename": "4.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/4.webp",
+          "size": 149818,
+          "sha": "6fbb69c44ef4f1d3d5a49b1da40c1e95709c5914"
+        },
+        {
+          "index": 5,
+          "filename": "5.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/5.webp",
+          "size": 85176,
+          "sha": "21ecd3cde47de9a5ce7b0bb06e12cc3d5ed27a26"
+        },
+        {
+          "index": 6,
+          "filename": "6.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/6.webp",
+          "size": 124130,
+          "sha": "87c77b7a67e3f667d679f0c930db5796f71c5b15"
+        },
+        {
+          "index": 7,
+          "filename": "7.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/7.webp",
+          "size": 115250,
+          "sha": "627121a86581b496c5eb3240b3e29f4d9d89e5f2"
+        },
+        {
+          "index": 8,
+          "filename": "8.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/8.webp",
+          "size": 108834,
+          "sha": "d68e88c7deb3d92683e944a4f8555bab902f5ecb"
+        },
+        {
+          "index": 9,
+          "filename": "9.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/9.webp",
+          "size": 140438,
+          "sha": "3614945ae5856b99828b739151a025273205d1d6"
+        },
+        {
+          "index": 10,
+          "filename": "10.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/10.webp",
+          "size": 159920,
+          "sha": "250c729d21eeec5c97bffc7991b38a5056bd80c6"
+        },
+        {
+          "index": 11,
+          "filename": "11.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/11.webp",
+          "size": 100832,
+          "sha": "2672124c7e826161fd22a83dba3ae49688528ac7"
+        },
+        {
+          "index": 12,
+          "filename": "12.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/12.webp",
+          "size": 178854,
+          "sha": "3b0a78d66f5609832282af6ebca400a2453db96a"
+        },
+        {
+          "index": 13,
+          "filename": "13.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/13.webp",
+          "size": 158972,
+          "sha": "d9187575d5b713b9e54d149e568b8f29482bd656"
+        },
+        {
+          "index": 14,
+          "filename": "14.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/14.webp",
+          "size": 148292,
+          "sha": "5da2355b39e78da97c5e04d67ce61b81385af5f6"
+        },
+        {
+          "index": 15,
+          "filename": "15.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/15.webp",
+          "size": 154274,
+          "sha": "275b1458389e2e7660936d586d39e6153cbb87b8"
+        },
+        {
+          "index": 16,
+          "filename": "16.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/16.webp",
+          "size": 170528,
+          "sha": "be260801f308c3a9c332dd72579857f5f77185b1"
+        },
+        {
+          "index": 17,
+          "filename": "17.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/17.webp",
+          "size": 178334,
+          "sha": "ef42f008fa47d8146062050956d4c32ed4cf9c5a"
+        },
+        {
+          "index": 18,
+          "filename": "18.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/18.webp",
+          "size": 210296,
+          "sha": "d7416cae328724aed6b9b7bb3d77c0ee9d03a3a7"
+        },
+        {
+          "index": 19,
+          "filename": "19.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/19.webp",
+          "size": 153898,
+          "sha": "589b4b3057d1a93f4a8aa7346c6a1bb801f10464"
+        },
+        {
+          "index": 20,
+          "filename": "20.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/20.webp",
+          "size": 186340,
+          "sha": "d4378bf332dbcb6d258860e442077e7292f43733"
+        },
+        {
+          "index": 21,
+          "filename": "21.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/21.webp",
+          "size": 189048,
+          "sha": "130007b91440a64522f6325a6d594a01c4b9a292"
+        },
+        {
+          "index": 22,
+          "filename": "22.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/22.webp",
+          "size": 191190,
+          "sha": "1d800e71d5dfc3a7639b007ee7c5cb9d876bfbfe"
+        },
+        {
+          "index": 23,
+          "filename": "23.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/23.webp",
+          "size": 165954,
+          "sha": "6bf99a2acdc64412201942898485ebe90d7ae414"
+        },
+        {
+          "index": 24,
+          "filename": "24.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/24.webp",
+          "size": 224880,
+          "sha": "0403d81106d0591dcf8b649643f5fafc5dc0c785"
+        },
+        {
+          "index": 25,
+          "filename": "25.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/25.webp",
+          "size": 157042,
+          "sha": "2db5a8192c80f87dd31b75c82fefa6257f47eb8e"
+        },
+        {
+          "index": 26,
+          "filename": "26.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/26.webp",
+          "size": 73788,
+          "sha": "e5d77990191a5b7199c35dcfade1a969fd4d612e"
+        },
+        {
+          "index": 27,
+          "filename": "27.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/27.webp",
+          "size": 160916,
+          "sha": "931777ea0d3f4ab83b8267794bedece6172504cb"
+        },
+        {
+          "index": 28,
+          "filename": "28.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/28.webp",
+          "size": 183782,
+          "sha": "ae421464e83a975d50d039fbc24ff26395199efd"
+        },
+        {
+          "index": 29,
+          "filename": "29.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/29.webp",
+          "size": 145728,
+          "sha": "71e09073425f6d6ff3746a48fd1810d230aca4d1"
+        },
+        {
+          "index": 30,
+          "filename": "30.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/30.webp",
+          "size": 151214,
+          "sha": "5ff2ca80a2c27634f6f278b5abe5f4dc9217d0a1"
+        },
+        {
+          "index": 31,
+          "filename": "31.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/31.webp",
+          "size": 138390,
+          "sha": "b2ae539796c7a000b820a824cb60f1d7783fd40e"
+        },
+        {
+          "index": 32,
+          "filename": "32.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/32.webp",
+          "size": 134748,
+          "sha": "8ac0833f29446fe274013a2e10e7ef13b432f192"
+        },
+        {
+          "index": 33,
+          "filename": "33.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/33.webp",
+          "size": 136162,
+          "sha": "7c0e9f62c1ddca5cf72de6577b094ae1502a7406"
+        },
+        {
+          "index": 34,
+          "filename": "34.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/34.webp",
+          "size": 135678,
+          "sha": "fbcb64f4db557bd4f3b5496610f1ee3bdb162589"
+        },
+        {
+          "index": 35,
+          "filename": "35.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/35.webp",
+          "size": 127442,
+          "sha": "eb5eb29c66f21a5f0f78f4dc10444c432029a930"
+        },
+        {
+          "index": 36,
+          "filename": "36.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/36.webp",
+          "size": 119216,
+          "sha": "3f9be6cf20bea9e6c8628aeecbc9d7d0226c074f"
+        },
+        {
+          "index": 37,
+          "filename": "37.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/37.webp",
+          "size": 130908,
+          "sha": "9b5ae49a7c7a2157f46df66fc919e5c5ac6d80ca"
+        },
+        {
+          "index": 38,
+          "filename": "38.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/38.webp",
+          "size": 167548,
+          "sha": "ba78a8790b0974347a64c16fcb4732126d5fcbbe"
+        },
+        {
+          "index": 39,
+          "filename": "39.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/39.webp",
+          "size": 156824,
+          "sha": "2d739294609f49aaf2d8de8c6a8696d9a3eb2a77"
+        },
+        {
+          "index": 40,
+          "filename": "40.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/40.webp",
+          "size": 124316,
+          "sha": "8afc55b309fd50c19a462a18f2c1ecdbd7e6deec"
+        },
+        {
+          "index": 41,
+          "filename": "41.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/41.webp",
+          "size": 127744,
+          "sha": "31ade7e6d66fa512a85dc53589a3aa62c244ad3c"
+        },
+        {
+          "index": 42,
+          "filename": "42.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/42.webp",
+          "size": 101772,
+          "sha": "cdf901fef6a7d76759b6b67389fc369338eed6b5"
+        },
+        {
+          "index": 43,
+          "filename": "43.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/43.webp",
+          "size": 123276,
+          "sha": "4153942e35884e31d3e0293e08b2f536b49c580b"
+        },
+        {
+          "index": 44,
+          "filename": "44.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/44.webp",
+          "size": 154128,
+          "sha": "6be9b8569d52f5db649df0df2747e0d93c2e90fd"
+        },
+        {
+          "index": 45,
+          "filename": "45.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/45.webp",
+          "size": 79156,
+          "sha": "4bd87c0ff24c27198dfe343bb29c340c9c8b7ef9"
+        },
+        {
+          "index": 46,
+          "filename": "46.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/46.webp",
+          "size": 110748,
+          "sha": "3ac036f5c8132b44599c969f91bcb23b1e2c532e"
+        },
+        {
+          "index": 47,
+          "filename": "47.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/47.webp",
+          "size": 155480,
+          "sha": "dba1b3a89a60afb0536b8866b85fabbdec5599e2"
+        },
+        {
+          "index": 48,
+          "filename": "48.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/48.webp",
+          "size": 138942,
+          "sha": "e99d48887819ce6e217ba52bb04a6a32c2ad1ff9"
+        },
+        {
+          "index": 49,
+          "filename": "49.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/49.webp",
+          "size": 145884,
+          "sha": "03fab6cc44a650dfd8059fcdb8e7cd61d7d610ee"
+        },
+        {
+          "index": 50,
+          "filename": "50.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/50.webp",
+          "size": 178122,
+          "sha": "85bd55b8b6b4601b1284052f4f3ed58ecd6c2d53"
+        },
+        {
+          "index": 51,
+          "filename": "51.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/51.webp",
+          "size": 138258,
+          "sha": "63bf3c00e28c5af92cc45597b1104cf00fcece03"
+        },
+        {
+          "index": 52,
+          "filename": "52.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/52.webp",
+          "size": 168932,
+          "sha": "2f9cdd2b1a5c6d4e83fd964bc132f8bb1164e892"
+        },
+        {
+          "index": 53,
+          "filename": "53.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/53.webp",
+          "size": 154330,
+          "sha": "6f3b5a11157992d22a373502f259690122167fb8"
+        },
+        {
+          "index": 54,
+          "filename": "54.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/54.webp",
+          "size": 133342,
+          "sha": "6ff89cd2a662f33f00ce73c1b6689d3f108aa8e1"
+        },
+        {
+          "index": 55,
+          "filename": "55.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/55.webp",
+          "size": 156266,
+          "sha": "5ab6dbee9e2da826d7ab87a3c5d34fcba11132d3"
+        },
+        {
+          "index": 56,
+          "filename": "56.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/56.webp",
+          "size": 159874,
+          "sha": "39243710b9b68f56192b74b10fa95006db9fe1d4"
+        },
+        {
+          "index": 57,
+          "filename": "57.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/57.webp",
+          "size": 106072,
+          "sha": "ea647efcedd8447be6abac9eebc9da81ff6fde33"
+        },
+        {
+          "index": 58,
+          "filename": "58.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/58.webp",
+          "size": 62156,
+          "sha": "d2b9f2dd151419821668e463eb83e4b3e829c106"
+        },
+        {
+          "index": 59,
+          "filename": "59.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/59.webp",
+          "size": 108192,
+          "sha": "0ea47df72816d376532f874245d052c690e3caab"
+        },
+        {
+          "index": 60,
+          "filename": "60.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/60.webp",
+          "size": 142186,
+          "sha": "95a945a4aceffff21c8e059d644c8a64259787a3"
+        },
+        {
+          "index": 61,
+          "filename": "61.webp",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/61.webp",
+          "size": 123746,
+          "sha": "bd30547c3f9e541c699d45d5d4d06f252a69597b"
+        },
+        {
+          "index": 62,
+          "filename": "final.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/images_1795884109094/final.jpg",
           "size": 59741,
           "sha": "4379e350a1ef630bc73f13d5aff6d604eaecc1da"
         }
