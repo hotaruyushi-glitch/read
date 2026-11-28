@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": 1795881548497,
+  "updatedAt": 1795881772344,
   "sortMode": "custom",
   "order": [
     "kaki_hoshuu",
@@ -60,11 +60,11 @@
     "orekko_haiboku",
     "orekko_haiboku_2",
     "what_became_of_our_elopement",
-    "tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome",
     "aoi_no_netorare_nikki_soushuuhen_kaede",
     "aoi_no_netorare_nikki_mou",
     "beit_no_jikani",
     "tsutomesaki_no_musume-san_o_jusei_saseyou_to_hisshi_na_ossan_the_uncle_who_is_determined_to_impregnate_his_employers_daughter",
+    "tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome",
     "tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_minshuku_hen",
     "tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_unsou_gaisha_hen",
     "a_kind-hearted_foolish_big-breasted_housewife_is_seduced_by_her_neighbor_a_man_with_a_trashy_apartment",
@@ -77,7 +77,8 @@
     "ore_ga_saki_ni_suki_datta_kara_yoo_2",
     "ore_ga_saki_ni_suki_datta_kara_yoo_3_im_the_one_who_liked_you_first_3",
     "deep_down_dark",
-    "shinen_immoral_mtl"
+    "shinen_immoral_mtl",
+    "tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen"
   ],
   "playlists": [],
   "reads": [
@@ -30923,229 +30924,6 @@
       ]
     },
     {
-      "id": "tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome",
-      "title": "Tsutomesaki no Musume-san o Oishiku Itadaku Hon Sonogo no Matome",
-      "path": "reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome",
-      "createdAt": 1795636106247,
-      "updatedAt": 1795636106247,
-      "playlists": [],
-      "isGitHub": true,
-      "hasMissingPages": false,
-      "pageCount": 30,
-      "pages": [
-        {
-          "index": 1,
-          "filename": "1.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/1.jpg",
-          "size": 120952,
-          "sha": "d14df741077b3c2be2cc82f85744d77dcb1417df"
-        },
-        {
-          "index": 2,
-          "filename": "2.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/2.jpg",
-          "size": 104189,
-          "sha": "e9e77246184f8c5fea6e6c638c9a9319953f0995"
-        },
-        {
-          "index": 3,
-          "filename": "3.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/3.jpg",
-          "size": 562887,
-          "sha": "0bacc5e34e6002dbb450616bbba33c52c1d4859f"
-        },
-        {
-          "index": 4,
-          "filename": "4.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/4.jpg",
-          "size": 482152,
-          "sha": "0253444b5da781bb426d9047f69037080235bf92"
-        },
-        {
-          "index": 5,
-          "filename": "5.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/5.jpg",
-          "size": 565665,
-          "sha": "6fb85592fe6a65a0fcb9e9edfcc12dc1dd524570"
-        },
-        {
-          "index": 6,
-          "filename": "6.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/6.jpg",
-          "size": 497450,
-          "sha": "a0580681675c680c368017496ae3b006c58f68b8"
-        },
-        {
-          "index": 7,
-          "filename": "7.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/7.jpg",
-          "size": 607043,
-          "sha": "6df9e3bb6668cda6a2a25ecce4e5bf7d4e84dc89"
-        },
-        {
-          "index": 8,
-          "filename": "8.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/8.jpg",
-          "size": 606561,
-          "sha": "be6ea7cb641a55ad6d4d1471df18449c0894a9ed"
-        },
-        {
-          "index": 9,
-          "filename": "9.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/9.jpg",
-          "size": 410518,
-          "sha": "7534e7b8d2739a89e92c4ef0936cea763aaee4aa"
-        },
-        {
-          "index": 10,
-          "filename": "10.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/10.jpg",
-          "size": 530509,
-          "sha": "ffe20e38ba01c56b27c3d3c8c7128ff68de14281"
-        },
-        {
-          "index": 11,
-          "filename": "11.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/11.jpg",
-          "size": 445995,
-          "sha": "371ed4ecb2311424655adf57408f9bf89b7d2276"
-        },
-        {
-          "index": 12,
-          "filename": "12.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/12.jpg",
-          "size": 501641,
-          "sha": "a0da186dae0d6473f1f9702f8f0e2386b06f66cb"
-        },
-        {
-          "index": 13,
-          "filename": "13.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/13.jpg",
-          "size": 487049,
-          "sha": "453113dcbeeaeb5ad68396dda10768f3bf5c9eae"
-        },
-        {
-          "index": 14,
-          "filename": "14.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/14.jpg",
-          "size": 616770,
-          "sha": "8ba400562782967251c9f0c8bea60a44dddb44b9"
-        },
-        {
-          "index": 15,
-          "filename": "15.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/15.jpg",
-          "size": 514705,
-          "sha": "8653a91576aed49607c2bd75ebfc54ef28f5cb94"
-        },
-        {
-          "index": 16,
-          "filename": "16.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/16.jpg",
-          "size": 496959,
-          "sha": "e6e762ff60ff0edbf7eb900a845e45a973dfd2f9"
-        },
-        {
-          "index": 17,
-          "filename": "17.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/17.jpg",
-          "size": 614402,
-          "sha": "11beeb4f99e0de75e1e8b4a636e0cb17c7219243"
-        },
-        {
-          "index": 18,
-          "filename": "18.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/18.jpg",
-          "size": 549746,
-          "sha": "7fb630ed94d4b54db340823bd2a0124802d3df23"
-        },
-        {
-          "index": 19,
-          "filename": "19.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/19.jpg",
-          "size": 474849,
-          "sha": "3fe6404bf8e37f477e6ec788cc38f171acbb8187"
-        },
-        {
-          "index": 20,
-          "filename": "20.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/20.jpg",
-          "size": 454919,
-          "sha": "a2f364f3172ea0b29a454a76eff091199e696780"
-        },
-        {
-          "index": 21,
-          "filename": "21.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/21.jpg",
-          "size": 441337,
-          "sha": "e4d3f6cb8614066a8cbf808f817c3fdfd9360b9f"
-        },
-        {
-          "index": 22,
-          "filename": "22.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/22.jpg",
-          "size": 515294,
-          "sha": "8481badfc70d4f1d7b373803384e0c5b959ce14b"
-        },
-        {
-          "index": 23,
-          "filename": "23.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/23.jpg",
-          "size": 398065,
-          "sha": "5ed77b82cd45135e5e472ccaed9268b62f49a698"
-        },
-        {
-          "index": 24,
-          "filename": "24.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/24.jpg",
-          "size": 487947,
-          "sha": "a16e27897158a8b62a132af088b6e4d77a64e752"
-        },
-        {
-          "index": 25,
-          "filename": "25.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/25.jpg",
-          "size": 539183,
-          "sha": "4a235baa7a9afeacdb2d3bb12a0973117a8f55b9"
-        },
-        {
-          "index": 26,
-          "filename": "26.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/26.jpg",
-          "size": 411482,
-          "sha": "f0e5e525c7a87a9113f97db128775016ce566a73"
-        },
-        {
-          "index": 27,
-          "filename": "27.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/27.jpg",
-          "size": 407600,
-          "sha": "3ea0d33673583da091ffb7844f3033b45ec02d9e"
-        },
-        {
-          "index": 28,
-          "filename": "28.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/28.jpg",
-          "size": 528810,
-          "sha": "2ccbbb5b7068036165aea11adf1b8697e455f22f"
-        },
-        {
-          "index": 29,
-          "filename": "29.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/29.jpg",
-          "size": 87590,
-          "sha": "78405181387d9a9ed7b1cf9aef5d42fbc3042e0f"
-        },
-        {
-          "index": 30,
-          "filename": "final.jpg",
-          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/final.jpg",
-          "size": 59741,
-          "sha": "4379e350a1ef630bc73f13d5aff6d604eaecc1da"
-        }
-      ]
-    },
-    {
       "id": "aoi_no_netorare_nikki_soushuuhen_kaede",
       "title": "Aoi no Netorare Nikki Soushuuhen + Kaede",
       "path": "reads/aoi_no_netorare_nikki_soushuuhen_kaede",
@@ -32620,6 +32398,229 @@
           "index": 13,
           "filename": "final.jpg",
           "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_jusei_saseyou_to_hisshi_na_ossan_the_uncle_who_is_determined_to_impregnate_his_employers_daughter/final.jpg",
+          "size": 59741,
+          "sha": "4379e350a1ef630bc73f13d5aff6d604eaecc1da"
+        }
+      ]
+    },
+    {
+      "id": "tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome",
+      "title": "Tsutomesaki no Musume-san o Oishiku Itadaku Hon Sonogo no Matome",
+      "path": "reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome",
+      "createdAt": 1795636106247,
+      "updatedAt": 1795636106247,
+      "playlists": [],
+      "isGitHub": true,
+      "hasMissingPages": false,
+      "pageCount": 30,
+      "pages": [
+        {
+          "index": 1,
+          "filename": "1.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/1.jpg",
+          "size": 120952,
+          "sha": "d14df741077b3c2be2cc82f85744d77dcb1417df"
+        },
+        {
+          "index": 2,
+          "filename": "2.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/2.jpg",
+          "size": 104189,
+          "sha": "e9e77246184f8c5fea6e6c638c9a9319953f0995"
+        },
+        {
+          "index": 3,
+          "filename": "3.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/3.jpg",
+          "size": 562887,
+          "sha": "0bacc5e34e6002dbb450616bbba33c52c1d4859f"
+        },
+        {
+          "index": 4,
+          "filename": "4.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/4.jpg",
+          "size": 482152,
+          "sha": "0253444b5da781bb426d9047f69037080235bf92"
+        },
+        {
+          "index": 5,
+          "filename": "5.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/5.jpg",
+          "size": 565665,
+          "sha": "6fb85592fe6a65a0fcb9e9edfcc12dc1dd524570"
+        },
+        {
+          "index": 6,
+          "filename": "6.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/6.jpg",
+          "size": 497450,
+          "sha": "a0580681675c680c368017496ae3b006c58f68b8"
+        },
+        {
+          "index": 7,
+          "filename": "7.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/7.jpg",
+          "size": 607043,
+          "sha": "6df9e3bb6668cda6a2a25ecce4e5bf7d4e84dc89"
+        },
+        {
+          "index": 8,
+          "filename": "8.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/8.jpg",
+          "size": 606561,
+          "sha": "be6ea7cb641a55ad6d4d1471df18449c0894a9ed"
+        },
+        {
+          "index": 9,
+          "filename": "9.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/9.jpg",
+          "size": 410518,
+          "sha": "7534e7b8d2739a89e92c4ef0936cea763aaee4aa"
+        },
+        {
+          "index": 10,
+          "filename": "10.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/10.jpg",
+          "size": 530509,
+          "sha": "ffe20e38ba01c56b27c3d3c8c7128ff68de14281"
+        },
+        {
+          "index": 11,
+          "filename": "11.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/11.jpg",
+          "size": 445995,
+          "sha": "371ed4ecb2311424655adf57408f9bf89b7d2276"
+        },
+        {
+          "index": 12,
+          "filename": "12.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/12.jpg",
+          "size": 501641,
+          "sha": "a0da186dae0d6473f1f9702f8f0e2386b06f66cb"
+        },
+        {
+          "index": 13,
+          "filename": "13.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/13.jpg",
+          "size": 487049,
+          "sha": "453113dcbeeaeb5ad68396dda10768f3bf5c9eae"
+        },
+        {
+          "index": 14,
+          "filename": "14.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/14.jpg",
+          "size": 616770,
+          "sha": "8ba400562782967251c9f0c8bea60a44dddb44b9"
+        },
+        {
+          "index": 15,
+          "filename": "15.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/15.jpg",
+          "size": 514705,
+          "sha": "8653a91576aed49607c2bd75ebfc54ef28f5cb94"
+        },
+        {
+          "index": 16,
+          "filename": "16.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/16.jpg",
+          "size": 496959,
+          "sha": "e6e762ff60ff0edbf7eb900a845e45a973dfd2f9"
+        },
+        {
+          "index": 17,
+          "filename": "17.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/17.jpg",
+          "size": 614402,
+          "sha": "11beeb4f99e0de75e1e8b4a636e0cb17c7219243"
+        },
+        {
+          "index": 18,
+          "filename": "18.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/18.jpg",
+          "size": 549746,
+          "sha": "7fb630ed94d4b54db340823bd2a0124802d3df23"
+        },
+        {
+          "index": 19,
+          "filename": "19.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/19.jpg",
+          "size": 474849,
+          "sha": "3fe6404bf8e37f477e6ec788cc38f171acbb8187"
+        },
+        {
+          "index": 20,
+          "filename": "20.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/20.jpg",
+          "size": 454919,
+          "sha": "a2f364f3172ea0b29a454a76eff091199e696780"
+        },
+        {
+          "index": 21,
+          "filename": "21.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/21.jpg",
+          "size": 441337,
+          "sha": "e4d3f6cb8614066a8cbf808f817c3fdfd9360b9f"
+        },
+        {
+          "index": 22,
+          "filename": "22.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/22.jpg",
+          "size": 515294,
+          "sha": "8481badfc70d4f1d7b373803384e0c5b959ce14b"
+        },
+        {
+          "index": 23,
+          "filename": "23.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/23.jpg",
+          "size": 398065,
+          "sha": "5ed77b82cd45135e5e472ccaed9268b62f49a698"
+        },
+        {
+          "index": 24,
+          "filename": "24.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/24.jpg",
+          "size": 487947,
+          "sha": "a16e27897158a8b62a132af088b6e4d77a64e752"
+        },
+        {
+          "index": 25,
+          "filename": "25.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/25.jpg",
+          "size": 539183,
+          "sha": "4a235baa7a9afeacdb2d3bb12a0973117a8f55b9"
+        },
+        {
+          "index": 26,
+          "filename": "26.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/26.jpg",
+          "size": 411482,
+          "sha": "f0e5e525c7a87a9113f97db128775016ce566a73"
+        },
+        {
+          "index": 27,
+          "filename": "27.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/27.jpg",
+          "size": 407600,
+          "sha": "3ea0d33673583da091ffb7844f3033b45ec02d9e"
+        },
+        {
+          "index": 28,
+          "filename": "28.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/28.jpg",
+          "size": 528810,
+          "sha": "2ccbbb5b7068036165aea11adf1b8697e455f22f"
+        },
+        {
+          "index": 29,
+          "filename": "29.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/29.jpg",
+          "size": 87590,
+          "sha": "78405181387d9a9ed7b1cf9aef5d42fbc3042e0f"
+        },
+        {
+          "index": 30,
+          "filename": "final.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_sonogo_no_matome/final.jpg",
           "size": 59741,
           "sha": "4379e350a1ef630bc73f13d5aff6d604eaecc1da"
         }
@@ -38291,6 +38292,264 @@
           "index": 216,
           "filename": "final.jpg",
           "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/shinen_immoral_mtl/final.jpg",
+          "size": 59741,
+          "sha": "4379e350a1ef630bc73f13d5aff6d604eaecc1da"
+        }
+      ]
+    },
+    {
+      "id": "tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen",
+      "title": "Tsutomesaki no Musume-san o Oishiku Itadaku Hon Teishoukuya Hen",
+      "path": "reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen",
+      "createdAt": 1795881754252,
+      "updatedAt": 1795881771218,
+      "playlists": [],
+      "isGitHub": true,
+      "hasMissingPages": false,
+      "pageCount": 35,
+      "pages": [
+        {
+          "index": 1,
+          "filename": "1.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/1.jpg",
+          "size": 430748,
+          "sha": "d9323c748fac8b303477e87fbad7a08bb2f793f2"
+        },
+        {
+          "index": 2,
+          "filename": "2.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/2.jpg",
+          "size": 771326,
+          "sha": "1f478614bdc36f32a7a32f3da8431b1569bf42ef"
+        },
+        {
+          "index": 3,
+          "filename": "3.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/3.jpg",
+          "size": 700936,
+          "sha": "b1d6143bd0906e96d56f1022f30cd0a31819b6d3"
+        },
+        {
+          "index": 4,
+          "filename": "4.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/4.jpg",
+          "size": 663703,
+          "sha": "bc0b489a69f028b1acd2ba66c7ea201f445316e6"
+        },
+        {
+          "index": 5,
+          "filename": "5.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/5.jpg",
+          "size": 769056,
+          "sha": "e21592386a0f7a23535241b9020e3ee8158fe1ad"
+        },
+        {
+          "index": 6,
+          "filename": "6.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/6.jpg",
+          "size": 760880,
+          "sha": "a13b04cfa88f9215aa2e827d5596cdcd6874e9e3"
+        },
+        {
+          "index": 7,
+          "filename": "7.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/7.jpg",
+          "size": 747602,
+          "sha": "d55aa7dd2cb8a1531e5d61ff57e0de68ae4e0c35"
+        },
+        {
+          "index": 8,
+          "filename": "8.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/8.jpg",
+          "size": 778651,
+          "sha": "cdf3b445dd43025a9ad5054d21cae006b4f6d93a"
+        },
+        {
+          "index": 9,
+          "filename": "9.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/9.jpg",
+          "size": 954769,
+          "sha": "7ab936b88d6a50946d6f6c6ae32d2a339c230ec3"
+        },
+        {
+          "index": 10,
+          "filename": "10.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/10.jpg",
+          "size": 738145,
+          "sha": "e303407e62f4caadef67203ca20341632a3f06ca"
+        },
+        {
+          "index": 11,
+          "filename": "11.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/11.jpg",
+          "size": 714576,
+          "sha": "6adcfc1a3aca529f214f0b6bcb487204f3a7099f"
+        },
+        {
+          "index": 12,
+          "filename": "12.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/12.jpg",
+          "size": 694958,
+          "sha": "aa5f33d9dc8e1c0f96df7b0f3ec6a84c1e25576d"
+        },
+        {
+          "index": 13,
+          "filename": "13.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/13.jpg",
+          "size": 812783,
+          "sha": "9c600c90cb5c92027622b112814ddee5551f8328"
+        },
+        {
+          "index": 14,
+          "filename": "14.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/14.jpg",
+          "size": 849187,
+          "sha": "99f7bf02f31d66f8151cb6e07ed259db8f144b74"
+        },
+        {
+          "index": 15,
+          "filename": "15.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/15.jpg",
+          "size": 810579,
+          "sha": "13fc587f791e8a8ae21e0c839351ff3385cf555b"
+        },
+        {
+          "index": 16,
+          "filename": "16.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/16.jpg",
+          "size": 766604,
+          "sha": "5c92ad1401f20bc430725de744291c44e83370ac"
+        },
+        {
+          "index": 17,
+          "filename": "17.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/17.jpg",
+          "size": 899431,
+          "sha": "81a73ade7054d366a1a89048e2b84243d79d7720"
+        },
+        {
+          "index": 18,
+          "filename": "18.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/18.jpg",
+          "size": 817773,
+          "sha": "3df5066124391f1da05618c9645f7802bb1cd88d"
+        },
+        {
+          "index": 19,
+          "filename": "19.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/19.jpg",
+          "size": 796154,
+          "sha": "da27b95279df7f64d474c333b13ddd3f70cf5088"
+        },
+        {
+          "index": 20,
+          "filename": "20.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/20.jpg",
+          "size": 778614,
+          "sha": "8e20a2c238848e93464420d876becd524921bf1a"
+        },
+        {
+          "index": 21,
+          "filename": "21.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/21.jpg",
+          "size": 867977,
+          "sha": "6c98a96ece91fd4046e0757b145d539856d0c20e"
+        },
+        {
+          "index": 22,
+          "filename": "22.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/22.jpg",
+          "size": 887225,
+          "sha": "83863da3844107c100325c7dc06ec6f0aca1f415"
+        },
+        {
+          "index": 23,
+          "filename": "23.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/23.jpg",
+          "size": 895228,
+          "sha": "1b61313b036fae3241b31b0994f93536da0a597e"
+        },
+        {
+          "index": 24,
+          "filename": "24.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/24.jpg",
+          "size": 685725,
+          "sha": "b67ef2d0a5177af84481d8d46674146ec393e12e"
+        },
+        {
+          "index": 25,
+          "filename": "25.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/25.jpg",
+          "size": 828664,
+          "sha": "2676419dc8bd0172f5acb79a45c37c8e03a54de3"
+        },
+        {
+          "index": 26,
+          "filename": "26.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/26.jpg",
+          "size": 704342,
+          "sha": "7557f697ab544989f79e4a4edcdc5afb878d13a0"
+        },
+        {
+          "index": 27,
+          "filename": "27.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/27.jpg",
+          "size": 822933,
+          "sha": "7eaeb6656757457abba0312913c6f72e672cb2d7"
+        },
+        {
+          "index": 28,
+          "filename": "28.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/28.jpg",
+          "size": 746988,
+          "sha": "109e71a2ca1476d547bda4fb1425fb99d29dce99"
+        },
+        {
+          "index": 29,
+          "filename": "29.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/29.jpg",
+          "size": 891846,
+          "sha": "5c864c0b89a090d2a8f88f42038369aaefc58761"
+        },
+        {
+          "index": 30,
+          "filename": "30.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/30.jpg",
+          "size": 943811,
+          "sha": "417718f43f7dfa8f67750474bbae180717308c2e"
+        },
+        {
+          "index": 31,
+          "filename": "31.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/31.jpg",
+          "size": 947891,
+          "sha": "7a200855b4f6a144cfe961377933300c059e521f"
+        },
+        {
+          "index": 32,
+          "filename": "32.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/32.jpg",
+          "size": 892146,
+          "sha": "e1d0e28d3e78bb005ab3faae52cff465c9e59f5b"
+        },
+        {
+          "index": 33,
+          "filename": "33.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/33.jpg",
+          "size": 254980,
+          "sha": "1c71640478d868201c5b52aa31f4c0123efc4d32"
+        },
+        {
+          "index": 34,
+          "filename": "34.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/34.jpg",
+          "size": 306537,
+          "sha": "1d5df4c2b90ea26ec720fbb1430392c7886632a9"
+        },
+        {
+          "index": 35,
+          "filename": "final.jpg",
+          "url": "https://raw.githubusercontent.com/hotaruyushi-glitch/read/main/reads/tsutomesaki_no_musume-san_o_oishiku_itadaku_hon_teishoukuya_hen/final.jpg",
           "size": 59741,
           "sha": "4379e350a1ef630bc73f13d5aff6d604eaecc1da"
         }
